@@ -5,4 +5,3 @@ template = "index.html"
 +++
 
 [extra]
-section_path = "blog/_index.md"

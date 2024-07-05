@@ -10,3 +10,9 @@ taxonomies = [{name = "tags", feed = true}]
 [markdown]
 highlight_code = true
 highlight_theme = "css"
+
+[extra]
+menu = [
+    { name = "blog", url = "blog", trailing_slash = true },
+    { name = "about", url = "about", trailing_slash = true },
+]
