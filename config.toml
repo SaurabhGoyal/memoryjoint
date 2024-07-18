@@ -16,3 +16,7 @@ menu = [
     { name = "blog", url = "blog", trailing_slash = true },
     { name = "about", url = "about", trailing_slash = true },
 ]
+socials = [
+    { name = "gitlab", url = "https://gitlab.com/saurabh.2561/", icon = "gitlab" },
+    { name = "twitter", url = "https://twitter.com/notintobuying", icon = "twitter" },
+]
