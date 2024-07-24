@@ -1,10 +1,10 @@
 +++
-title = "Writing a Bittorrent Client"
-date = 2024-07-05
-description = "Writing a Bittorrent client."
+title = "Implementing a Bittorrent Client"
+date = 2024-07-23
+description = "Journey of writing a Bittorrent client in Rust"
 
 [taxonomies]
-tags = ["torrent", "networking", "io"]
+tags = ["torrent", "concurrency", "networking", "io", "rust"]
 
 [extra]
 toc = true
@@ -13,15 +13,15 @@ quick_navigation_buttons = true
 
 # Bittorrent
 ## What is it?
-- It is a protocol to exchange data chunks with other people on a network, generally internet.
+It is a protocol to exchange data chunks with other people on a network, generally internet.
 
-##How is it different from simple HTTP?
+## How is it different from simple HTTP?
 - HTTP requires client server model where you (client) download data from a data owner (server) that you know about.
 - Bittorrent enables a lot of people in the internet to collaboratively make the file available to a lot of other people without one server being a bottleneck or owner. Essentially one file can have many servers instead of one.
 - This results in higher availability and download speed of the file.
 
-##How does it work?
-- This is the best part - this is one of the simplest protocols I have ever read. This is essentially a simple logical solution to how to achieve multiple people in a network requesting and serving a file.
+## How does it work?
+- This is the best part - this is one of the simplest protocols I have ever read. This is essentially a simple logical solution to how to achieve a situation where multiple people in a network are requesting and serving a file to each other.
 - The whole specification is listed [here officially](http://bittorrent.org/beps/bep_0003.html) and [here unofficially (but more verbose)](https://wiki.theory.org/BitTorrentSpecification) but I would give a high level view here -
     - You are a peer, looking for a file.
     - You need a unique-id for the file and someone with whom you can ask about servers of that file.

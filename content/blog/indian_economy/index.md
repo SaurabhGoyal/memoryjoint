@@ -1,10 +1,11 @@
 +++
-title = "Notes on Indian Economy Episode in Seen and Unseen Podcast"
+title = "Indian Economy"
 date = 2024-07-12
-description = "-"
+description = "Notes on Indian Economy Episode in Seen and Unseen Podcast"
+draft = true
 
 [taxonomies]
-tags = ["economy"]
+tags = ["personal_notes", "economy"]
 
 [extra]
 toc = true

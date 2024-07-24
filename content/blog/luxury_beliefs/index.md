@@ -1,7 +1,8 @@
 +++
-title = "Notes on Luxury Beliefs Episode in Seen and Unseen Podcast"
+title = "Luxury Beliefs"
 date = 2024-07-12
-description = "-"
+description = "Notes on Luxury Beliefs Episode in Seen and Unseen Podcast"
+draft = true
 
 [taxonomies]
 tags = ["economy"]
