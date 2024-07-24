@@ -33,4 +33,4 @@ Luxury beliefs
 Why do [rich] people have these?
 - [Obvious one] To feel virtuous cheaply.
 - To feel safer among the less-privileged by falsely signalling to them a concern for them. This is similar to why statemen build things like temples.
-- 
+-  
