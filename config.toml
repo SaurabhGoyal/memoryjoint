@@ -17,6 +17,7 @@ menu = [
     { name = "about", url = "about", trailing_slash = true },
 ]
 socials = [
+    { name = "github", url = "https://github.com/SaurabhGoyal/", icon = "github" },
     { name = "gitlab", url = "https://gitlab.com/saurabh.2561/", icon = "gitlab" },
     { name = "twitter", url = "https://twitter.com/notintobuying", icon = "twitter" },
 ]

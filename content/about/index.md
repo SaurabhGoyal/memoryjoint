@@ -15,10 +15,10 @@ I am a backend developer, graduated in 2015 from JSSATE, Noida with B.Tech in Co
 - Checkout my projects to know more about what I have built.
 
 Some links I follow -
-- https://this-week-in-rust.org/
-- https://kerkour.com/
-- https://blog.yoshuawuyts.com/
-- https://smallcultfollowing.com/babysteps/
+- [https://this-week-in-rust.org/](https://this-week-in-rust.org/)
+- [https://kerkour.com/](https://kerkour.com/)
+- [https://blog.yoshuawuyts.com/](https://blog.yoshuawuyts.com/)
+- [https://smallcultfollowing.com/babysteps/](https://smallcultfollowing.com/babysteps/)
 
 # Personal
 I like thinking about stuff like ethics and psychology. I like TV (shows and movies) that make me feel human emotions I can never encounter in my life.
