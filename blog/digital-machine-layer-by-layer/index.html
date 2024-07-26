@@ -1,0 +1,521 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base" content="http://memoryjoint.com">
+
+    
+    <title>Memory Joint • Digital Machine Layer By Layer</title>
+
+    
+    
+    
+
+    
+    <link rel="alternate" type="application/atom+xml" title="Memory Joint" href="http://memoryjoint.com/atom.xml">
+
+    
+    
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/inter_subset_en.css?h=d8cf4ad058d6c3a4015b">
+    
+
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/main.css?h=5e152d56b06b2cb54aee" />
+
+    <meta name="color-scheme" content="light dark" />
+        <meta name="description" content="This post gives a layer by layer information of how humans make sand think." />
+        <meta property="og:description" content="This post gives a layer by layer information of how humans make sand think." />
+
+    
+        <meta name="robots" content="index, nofollow" />
+    
+
+    <meta property="og:title" content="Digital Machine Layer By Layer" />
+    <meta property="og:type" content="article" />
+
+    
+
+    <meta property="og:locale" content="en_GB" />
+
+    <meta property="og:url" content="http:&#x2F;&#x2F;memoryjoint.com&#x2F;blog&#x2F;digital-machine-layer-by-layer&#x2F;" /><meta property="og:site_name" content="Memory Joint"><meta http-equiv="Content-Security-Policy"
+content="default-src 'self';font-src &#x27;self&#x27; data:;img-src &#x27;self&#x27; https:&#x2F;&#x2F;* data:;media-src &#x27;self&#x27;;style-src &#x27;self&#x27;;frame-src player.vimeo.com https:&#x2F;&#x2F;www.youtube-nocookie.com;connect-src 'self';script-src 'self' 'self'">
+
+        <noscript><link rel="stylesheet" href="http://memoryjoint.com/no_js.css"/></noscript>
+        <script type="text/javascript" src="http://memoryjoint.com/js/initializeTheme.min.js"></script>
+        <script defer src="http://memoryjoint.com/js/themeSwitcher.min.js"></script></head>
+
+
+<body>
+    <header>
+    <nav class="navbar">
+        <div class="nav-title">
+            <a class="home-title" href=http://memoryjoint.com>Memory Joint</a>
+        </div>
+            <div class="nav-navs">
+                <ul>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/blog/">
+                                blog
+                                </a>
+                            </li>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/about/">
+                                about
+                                </a>
+                            </li>
+                        
+
+                    
+                    
+
+                    <li class="theme-switcher-wrapper js"><div
+        title="Toggle dark&#x2F;light mode"
+        class="theme-switcher"
+        tabindex="0"
+        role="button"
+        aria-label="Toggle dark mode"
+        aria-pressed="false">
+    </div><div
+        title="Reset mode to default"
+        class="theme-resetter"
+        tabindex="0"
+        role="button"
+        aria-hidden="true"
+        aria-label="Reset mode to default">
+    </div>
+
+</li>
+</ul>
+            </div>
+        
+    </nav>
+</header>
+
+    <div class="content">
+
+        
+        
+
+
+
+
+<main>
+    <article>
+        <h1 class="article-title">
+            Digital Machine Layer By Layer
+        </h1>
+
+        <ul class="meta"><li>5th Jul 2024</li>&nbsp;•&nbsp;<li title="1449 words">8 min read</li>&nbsp;•&nbsp;<li>Tags:&nbsp;</li><li><a href=http://memoryjoint.com/tags/processor/>processor</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/kernel/>kernel</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/compiler/>compiler</a></li>
+        </ul>
+
+        
+
+        
+        
+            
+
+<div class="toc-container">
+    
+        <h3>Table of Contents</h3>
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#processor">Processor</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#logic-modelled-using-tautology">Logic - modelled using tautology</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#physical-layer-translating-logic-into-hardware">Physical Layer - Translating logic into hardware</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#logical-layer-cpu">Logical layer (CPU)</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#programme">Programme</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#running-the-machine-booting-short-for-bootstrapping">Running the machine (booting - short for bootstrapping)</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#using-the-processor-setting-the-foundation-i-e-kernel">Using the processor - setting the foundation, i.e. Kernel</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#writing-programs-using-a-compiler">Writing programs using a compiler</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+        
+
+        <section class="body">
+            
+            
+            <p>What happens when I write a line of code? Where does it run? How does it make the text "crash and burn" appear in my terminal when I am frustrated with my bugs and do random typing? Following gives a basic idea from scratch of all this.</p>
+<h1 id="processor"><a class="header-anchor no-hover-padding" href="#processor" aria-label="Anchor link for: processor"><span class="link-icon" aria-hidden="true"></span></a>
+Processor</h1>
+<h2 id="logic-modelled-using-tautology"><a class="header-anchor no-hover-padding" href="#logic-modelled-using-tautology" aria-label="Anchor link for: logic-modelled-using-tautology"><span class="link-icon" aria-hidden="true"></span></a>
+Logic - modelled using tautology</h2>
+<ul>
+<li>There are statements which can be true or false.</li>
+<li>There are operations which can take certain statements and result into new statements.</li>
+<li>AND, OR and INVERSE are the three base operations.</li>
+<li>They can be combined to create new ones such as NAND, XOR, NOR.</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/digital-machine-layer-by-layer/truth-table.png" alt="truth-table.png" /></p>
+<p><span style="font-size:0.7em;"><a href="https://introcs.cs.princeton.edu/java/71boolean/images/truth-table.png">(source)</a></span></p>
+<h2 id="physical-layer-translating-logic-into-hardware"><a class="header-anchor no-hover-padding" href="#physical-layer-translating-logic-into-hardware" aria-label="Anchor link for: physical-layer-translating-logic-into-hardware"><span class="link-icon" aria-hidden="true"></span></a>
+Physical Layer - Translating logic into hardware</h2>
+<ul>
+<li>Electricity is the medium and voltage is what defines concept of discrete values based on threshold.</li>
+<li>Transistors are measurement device for the voltage that represent statement values - 0/1.</li>
+<li>Integrated circuits are connected transistors and capacitors (regulation and stability purpose) that design the desired logical operations.</li>
+<li>Flip-Flops are integrated circuits that can persist one value (1 bit information) in form of held voltages. This is what provides persistence.</li>
+<li>Registers (logical) -
+<ul>
+<li>Storage - constructed using multiple flip-flops connected together in a specific configuration. For example, an 8-bit register would consist of eight flip-flops, each capable of storing one bit of data.</li>
+<li>Control logic - a dedicated IC to control the read and write logic for values in register.</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/digital-machine-layer-by-layer/flip-flop.jpg" alt="flip-flop.jpg" /></p>
+<p><span style="font-size:0.7em;"><a href="https://i.ytimg.com/vi/nSXSafk4SjA/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&amp;rs=AOn4CLDuHZz92Ymdap6tAwNp_KyCAjwuNA">(source)</a></span></p>
+<h2 id="logical-layer-cpu"><a class="header-anchor no-hover-padding" href="#logical-layer-cpu" aria-label="Anchor link for: logical-layer-cpu"><span class="link-icon" aria-hidden="true"></span></a>
+Logical layer (CPU)</h2>
+<p>Processor encapsulates following things in one package with which software interacts.</p>
+<ul>
+<li>Memory - Multiple types (cache, main etc.), mostly flip-flops made into SRAM.</li>
+<li>Registers - Smallest pieces of information storage and instruction definition.</li>
+<li>Microcode - low-level code (binary code) that directly controls the operation of the processor's hardware components by generating control signals that dictate the flow of electric current within the processor. It serves as a bridge between the higher-level instructions from the processor's instruction set architecture (ISA) and the physical hardware components of the processor.</li>
+<li>Instruction-Set - Higher level instructions (MOV, ADD, DUB, JMP etc.) that programs can use to interact with the hardware. This is synchronous programming.</li>
+<li>Interrupts - This adds the element of asynchrony in the instruction execution. Any device (program or hardware, internal or external) can send an interrupt. There are dedicated ICs for detecting, prioritising and handling interrupts by mapping them to their handlers. Microcode has the logic for all this, essentially event loop type thing, freeze current thing into program-counter and stack into registers and execute the next ting.</li>
+<li>Special instructions - Most processors also come with atomic instructions to synchronisation (consistency of data among running tasks opn shared processor) to the programmes. These instructions are essentially hardware bound coupled instructions such as compare-and-swap.</li>
+<li>Architectures - RISC (ARM, SPARC) and CISC (x86)</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/digital-machine-layer-by-layer/cpu_arch.jfif" alt="cpu_arch.jfif" /></p>
+<p><span style="font-size:0.7em;"><a href="https://www.linkedin.com/pulse/decoding-cpu-instruction-set-architecture-isa-vasuki-shankar/">(source)</a></span></p>
+<h1 id="programme"><a class="header-anchor no-hover-padding" href="#programme" aria-label="Anchor link for: programme"><span class="link-icon" aria-hidden="true"></span></a>
+Programme</h1>
+<h2 id="running-the-machine-booting-short-for-bootstrapping"><a class="header-anchor no-hover-padding" href="#running-the-machine-booting-short-for-bootstrapping" aria-label="Anchor link for: running-the-machine-booting-short-for-bootstrapping"><span class="link-icon" aria-hidden="true"></span></a>
+Running the machine (booting - short for bootstrapping)</h2>
+<ul>
+<li>When power flows, a specific register (memory address) called “Reset Vector” starts the execution of few instructions. Very first one is POST(Power-On Self-Test) which checks all the hardware components for health and initialises all of them.</li>
+<li>Then another memory location called MBR (Master Boot Record) is executed to find the boot-loader program and transfer the execution to that. Boot-loader initialises additional hardware components and loads the kernel into memory for execution.</li>
+<li>Kernel is executed which furthers sets up device drivers and system configurations. Once ready kernel hands over the execution to the user-space processes.</li>
+<li>User-space processes may involve remaining OS functionalities such as system services and GUI. Now user can start interacting with the machine.</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/digital-machine-layer-by-layer/master-boot-record.gif" alt="master-boot-record.gif" /></p>
+<p><span style="font-size:0.7em;"><a href="https://scx010c073.blogspot.com/2012/03/mbr-master-boot-record.html">(source)</a></span></p>
+<h2 id="using-the-processor-setting-the-foundation-i-e-kernel"><a class="header-anchor no-hover-padding" href="#using-the-processor-setting-the-foundation-i-e-kernel" aria-label="Anchor link for: using-the-processor-setting-the-foundation-i-e-kernel"><span class="link-icon" aria-hidden="true"></span></a>
+Using the processor - setting the foundation, i.e. Kernel</h2>
+<ul>
+<li>Kernel is the programme that wraps processor's low-level instruction-set and provides a higher lever programming API to utilise various capabilities of the processor. Compared to writing programmes for tasks directly using processor's instruction set, a kernel helps in two things -
+<ul>
+<li>Boilerplate for complex functionalities - Functionalities such as multi-tasking, persistence and networking are common to most modern tasks. For each task to implement them is duplicate work and can be delegated to one single program, i.e. kernel.</li>
+<li>Security and guarantees - Above functionalities often require use of processor by untrusted parties. In such cases, ensuring that any such user does not cause any harm to the processor or to other user's tasks requires routing all requests to use the hardware via a reliable programme layer, i.e. kernel.</li>
+</ul>
+</li>
+<li>Kernel provides above mentioned security and guarantees by utilising hardware's concepts such as trap-table, timer interrupt and atomic instructions to provide privileged instructions, process switching and concurrency respectively.</li>
+<li>APIs -
+<ul>
+<li>Process API - A virtual construct for processor's running time. APIs like <code>fork()</code>, <code>wait()</code>, <code>exit()</code>, <code>kill()</code>, <code>exec()</code> provide ways for programmer to use processor's running time for multiple tasks at a time.</li>
+<li>Memory API - A construct for machine's embedded memory registers. APIs like <code>malloc()</code> and <code>free()</code> provide ways for programmer to control what registers to  access and update and how.</li>
+<li>File Systems API - A construct for managing a virtual structure for information. APIs like <code>open()</code>, <code>close()</code>, <code>read()</code> and <code>write()</code> provide ways for programmer to modify structures and read and write data from them. Most kernels use the same APIs to manage devices which add capabilities to the system. The reason for this is that device management and data transfer is same as a virtual structure management and for control commands for specific devices <code>ioctl()</code> API is there.</li>
+<li>Networking API - A construct for managing connections with other machines. APIs like <code>socket</code>, <code>send()</code> and <code>recv()</code> provide ways for programmer to create connections and do datab transfer.</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/digital-machine-layer-by-layer/kernel-modules.png" alt="kernel-modules.png" /></p>
+<p><span style="font-size:0.7em;"><a href="https://drivers.suse.com/doc/SolidDriver/Kernel_Modules.html">(source)</a></span></p>
+<h2 id="writing-programs-using-a-compiler"><a class="header-anchor no-hover-padding" href="#writing-programs-using-a-compiler" aria-label="Anchor link for: writing-programs-using-a-compiler"><span class="link-icon" aria-hidden="true"></span></a>
+Writing programs using a compiler</h2>
+<ul>
+<li>This is the layer where programmes for applications / tasks are written.</li>
+<li>Interfacing with kernel APIs require understanding the development environment they support. In case of Linux kernel, this includes -
+<ul>
+<li>use C programming language</li>
+<li>a C compiler such as GCC</li>
+<li>interfaces for kernel API, exposed for this development env (C header files for Linux)</li>
+<li>the interface itself has an implementation in the kernel source code and can be in any language / development environment as long as kernel has provided an interface for the programmer's dev env to kernel's implementation dev env.</li>
+</ul>
+</li>
+<li>Such development environments may not always be the best to use for a task because while they are simpler and more functional to use than processor's instruction-set, they still can be simplified for some common aspects of application programming that most programmers do. Ex.-
+<ul>
+<li>Memory management - It has multiple parts -
+<ul>
+<li>Ensuring that memory allocation and deallocation is happening correctly without having the programmer manulally keep an eye on it to avoid memory leaks or memory misses.</li>
+<li>A common way to provide this is abstracting the concept of memory behing another concept called "variable".</li>
+<li>Once abstracted in the form of variables, memory can then have more features such as what type of data it holds and what kind of mutability it supports or what its lifecycle is.</li>
+</ul>
+</li>
+<li>Data structures - Providing implementations for data structures commonm to most tasks such a list, stack, queue, map etc.</li>
+<li>Text manipulation - A lot of tasks require dealing with text in some input or output and thus building and updating texts in various forms is a common requirement.</li>
+<li>Concurrency - While kernel provides concurrency as a feature with the help of processor's interrupt and threads, there are more forms of concurrency paradigms such as event-loop, async and coroutines that can be better suited for most tasks in terms of ease of development and performance output.</li>
+</ul>
+</li>
+<li>There are development environments providing these features out of the box by building on top of the kernel's out of box development environments and are commonly called "high level programming languages". Ex.- Java and Rust are such high level languages. Interestingly, if you would check how these languages were written in, you would find that they were written in the same language which is circular. How this works is that most language creators, write a bare minimum implementation of thew language's base features and rules set using the kernel's development environment and then use that to write majority of the other set of the features using that very basic set. It's called <code>bootstrapping</code>.</li>
+</ul>
+<hr />
+<p>The above should give a good idea of what one actually is manipulating with each line of code one writes and how.</p>
+<hr />
+
+        </section>
+
+        
+        
+        
+        
+
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+
+        
+        
+
+        
+                
+                
+                    
+                        
+                        
+                        
+                    
+                    
+                
+                
+            <nav class="full-width article-navigation">
+                <div><a href="http://memoryjoint.com/blog/bittorrent-client/" aria-label="Next" aria-describedby="left_title"><span class="arrow">←</span>&nbsp;Next</a>
+                <p aria-hidden="true" id="left_title">[In-Progress] Implementing a Bittorrent Client</p></div>
+                <div></div>
+            </nav>
+        
+
+    </article>
+</main>
+
+    <div id="button-container">
+        
+        
+            <div id="toc-floating-container">
+                <input type="checkbox" id="toc-toggle" class="toggle"/>
+                <label for="toc-toggle" class="overlay"></label>
+                <label for="toc-toggle" id="toc-button" class="button" title="Toggle Table of Contents">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M414.82-193.094q-18.044 0-30.497-12.32-12.453-12.319-12.453-30.036t12.453-30.086q12.453-12.37 30.497-12.37h392.767q17.237 0 29.927 12.487 12.69 12.486 12.69 30.203 0 17.716-12.69 29.919t-29.927 12.203H414.82Zm0-244.833q-18.044 0-30.497-12.487Q371.87-462.9 371.87-480.45t12.453-29.92q12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.511 12.69 12.512 12.69 29.845 0 17.716-12.69 30.086-12.69 12.37-29.927 12.37H414.82Zm0-245.167q-18.044 0-30.497-12.32t-12.453-30.037q0-17.716 12.453-30.086 12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.486 12.69 12.487 12.69 30.203 0 17.717-12.69 29.92-12.69 12.203-29.927 12.203H414.82ZM189.379-156.681q-32.652 0-55.878-22.829t-23.226-55.731q0-32.549 23.15-55.647 23.151-23.097 55.95-23.097 32.799 0 55.313 23.484 22.515 23.484 22.515 56.246 0 32.212-22.861 54.893-22.861 22.681-54.963 22.681Zm0-245.167q-32.652 0-55.878-23.134-23.226-23.135-23.226-55.623 0-32.487 23.467-55.517t56.12-23.03q32.102 0 54.721 23.288 22.62 23.288 22.62 55.775 0 32.488-22.861 55.364-22.861 22.877-54.963 22.877Zm-.82-244.833q-32.224 0-55.254-23.288-23.03-23.289-23.03-55.623 0-32.333 23.271-55.364 23.272-23.03 55.495-23.03 32.224 0 55.193 23.288 22.969 23.289 22.969 55.622 0 32.334-23.21 55.364-23.21 23.031-55.434 23.031Z"/></svg>
+                </label>
+                <div class="toc-content">
+                    
+
+<div class="toc-container">
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#processor">Processor</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#logic-modelled-using-tautology">Logic - modelled using tautology</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#physical-layer-translating-logic-into-hardware">Physical Layer - Translating logic into hardware</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#logical-layer-cpu">Logical layer (CPU)</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#programme">Programme</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#running-the-machine-booting-short-for-bootstrapping">Running the machine (booting - short for bootstrapping)</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#using-the-processor-setting-the-foundation-i-e-kernel">Using the processor - setting the foundation, i.e. Kernel</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/#writing-programs-using-a-compiler">Writing programs using a compiler</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+                </div>
+            </div>
+        
+
+        
+        
+
+        
+        <a href="#" id="top-button" class="no-hover-padding" title="Go to the top of the page">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"/></svg>
+        </a>
+    </div>
+
+
+<span id="copy-success" class="hidden">
+        Copied!
+    </span>
+    <span id="copy-init" class="hidden">
+        Copy code to clipboard
+    </span>
+    <script defer src="http://memoryjoint.com/js/copyCodeToClipboard.min.js"></script>
+    </div>
+    <footer>
+    <section>
+        <nav class="socials nav-navs">
+                <ul>
+                    
+                    
+                    
+                    
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://github.com/SaurabhGoyal/>
+                                    <img alt=github title=github src="http://memoryjoint.com/social_icons/github.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://gitlab.com/saurabh.2561/>
+                                    <img alt=gitlab title=gitlab src="http://memoryjoint.com/social_icons/gitlab.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://twitter.com/notintobuying>
+                                    <img alt=twitter title=twitter src="http://memoryjoint.com/social_icons/twitter.svg">
+                                </a>
+                            </li>
+                        
+                    
+                </ul>
+            
+        </nav>
+
+        
+        <nav class="nav-navs">
+        </nav>
+
+        <div class="credits">
+            <small>
+                
+
+                
+                Powered by
+                <a rel=""  href="https://www.getzola.org">Zola</a>
+                &amp;
+                <a rel=""  href="https://github.com/welpo/tabi">tabi</a>
+
+                </small>
+        </div>
+    </section>
+
+    </footer>
+
+</body>
+
+</html>
