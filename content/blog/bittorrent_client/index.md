@@ -1,6 +1,7 @@
 +++
-title = "Implementing a Bittorrent Client"
-date = 2024-07-23
+title = "[In-Progress] Implementing a Bittorrent Client"
+date = 2024-07-18
+updated = 2024-07-26
 description = "Journey of writing a Bittorrent client in Rust"
 
 [taxonomies]
@@ -40,6 +41,10 @@ Building a robust client requires dealing with following concepts in depth -
 - **TCP/UDP and sockets -** It requires a lot of data transfer and packet exchanges which need to be raw TCP/UDP messages. For them to be correctly perceived by peer, you need to form them correctly. While you may be interacting with the networking APIs of the kernel via the networking APIs provided by your programming language's libraries, you would have to understand how sockets work, how they are made into blocking vs non-blocking to be able to correctly send and receive data at the same time from the peer.
 - **IO -** You would have to write a lot of data into disk, it will be made available in chunks and then verified for integrity and merged into the output file. This can happen for multiple files concurrently. This would also require you to be able to continue from where you left in case of failures or client closures. This requires understanding IO APIs and FS APIs in detail.
 - **Concurrency -** The application is going to be IO heavy since most of time would be spent in either downloading data from network (peers) or writing data to disk. This makes it a good and almost indespensable case for adding concurrency to application to get any practical performance. There would be atleast two aspects that need to be concurrent - 1) Requesting and downloading chunks from peers 2) Managing multiple peers at the same time.
+
+## Reading Material
+- [Bittorrent official specification](http://bittorrent.org/beps/bep_0003.html)
+- [Bittorrent unofficial specification](https://wiki.theory.org/BitTorrentSpecification#Identification)
 
 # Design
 ## Entities
@@ -85,41 +90,60 @@ This is just an interface to add, start, delete and continue torrents using the 
 
 ## Actors
 We need following components to perform the end to end download operation -
-- Peer Controller - For given peer ip, port and torrent, this will perform following actions -
-    - Initiate and maintain connection with peer.
-    - Maintain and update state of interest, choking and piece-availability-map (bitfield).
-    - Receive commands from other controllers to request piece from peer.
-    - Receive and download piece from peer and send the piece data to other controllers for persistence and verification. 
-- Torrent Controller - For given torrent metainfo source (torrent file or magnet url), this will perform following actions - 
-    - Parse metainfo from the source using bencode parser.
-    - Initiate and sync torrent state with the data that is already present on the disk.
-    - Fetch updated peer list from tracker.
-    - Schedule pending blocks for download by sending commands to peer controller.
-    - Initiate and maintain peer controllers as part of scheduling (this, instead of peer connection pooling, is done as to make a peer connection only if needed for a block, saves a lot of socket count).
-    - Persist downloaded blocks when recieved from peer controllers.
-    - Verify persisted blocks using Sha1. 
-    - Write files as and when all blocks for the file have been persisted.
-- Client Controller - This will perform following actions - 
-    - Initialise and sync client state with the data on disk for info of already added torrents and their status.
-    - Provide APIs to add, pause, resume and remove torrents.
-    - Render the state into UI.
+### Peer Controller
+For given peer ip, port and torrent, this will perform following actions -
+- Initiate and maintain connection with peer.
+- Maintain and update state of interest, choking and piece-availability-map (bitfield).
+- Receive commands from other controllers to request piece from peer.
+- Receive and download piece from peer and send the piece data to other controllers for persistence and verification. 
 
-## Key aspects
-### Concurrency
-- First read [Concurrency Primer](#concurrency-primer). 
-- Let's now understand all our IO bound tasks and what we know about their timing -
-    - Terminal -
-        - Reading data from peer's connection - we don't know when peer may write to us
-        - Writing data to peer's connection - we don't know when we may have to write to peer to request a block since that directly depends on block's scheduling and availability from all peers
-    - Dependent -
-        - Scheduling blocks - dependent on writing to peer
-        - Writing block on disk - dependent on data from peer
-        - Reading block on disk - dependent on data from peer - we have to read data to perform Sha1 verification
-- For brevity, here are the main CPU bound tasks -
-    - State management and decision making based on status
-    - Sha1 verification of available blocks
-- If we check IO bound tasks for a sample state of 5 active torrents with 5 peer connection each, we would have 25 peer connection at any given time and 5 torrent controllers to manage each torrent's state. This results in conecurreny factor of 55 (2 per peer for reader and writer + 1 per torrent controller = 2 * 25 + 5). Practically a torrent may make connections with ~10 peers and a client should be able to support ~10 torrents. That would make the concurrency factor to 210. We can clearly see that a thread based concurrency model would not be scalable for us. Because of clear unscalability of thread model and the IO-heavy nature of the application, async model is the right way to go.
-- We will see later if we need to customise the thread pool to dedicatedly handle the CPU bound tasks for better performance.
+### Torrent Controller
+For given torrent metainfo source (torrent file or magnet url), this will perform following actions - 
+- Parse metainfo from the source using bencode parser.
+- Initiate and sync torrent state with the data that is already present on the disk.
+- Fetch updated peer list from trackers.
+- Schedule pending blocks for download by sending commands to peer controller.
+- Initiate and maintain peer controllers as part of scheduling (this, instead of peer connection pooling, is done as to make a peer connection only if needed for a block, saves a lot of socket count).
+- Persist downloaded blocks when recieved from peer controllers.
+- Verify persisted blocks using Sha1. 
+- Write files as and when all blocks for the file have been persisted.
+
+### Client Controller
+This will perform following actions - 
+- Initialise and sync client state with the data on disk for info of already added torrents and their status.
+- Provide APIs to add, pause, resume and remove torrents.
+- Render the state into UI.
+
+## Concurrency
+
+### Primer
+Ideally, we want everything to run all the time parallelly. We can just run every task some amount, switch to another and keep going like this untill all tasks are complete. However, a blanket strategy of making every task concurrent is not efficient because of two factors -
+1. actual execution resource - This is always the processor, you are always bounded by the number of processors / cores you have in the system which is always limited and constant compared to the number of tasks you would want to parallelise. 
+2. dependency of each task - we need to see where we can save time in execution and that is where we need to check those dependencies of the task which are outside the processors' capability such as time, devide drivers, network etc.  Simple examples
+    - if two tasks say wait 10 second, the processor doesn't have to wait for 10 + 10 seconds, processor can trigger the tasks and parallelise the waiting part because the waiting (time increasing) is not happending inside the processor, the phenomenon lives outside the processor.
+    - if two tasks say to write a file each to a disk, the processor doesn't have to write them one by one, because that ,means processor has given data for first file to the disk driver and then waiting for the driver to finish. Processor can trigger the tasks, send the writing request to disk and then parallelise the waiting part because the waiting (for disk driver to complete writing) is not happending inside the processor, the phenomenon lives outside the processor.
+
+This means that if we have tasks which actually use the **processor's internal capability**, i.e. executing instructions, then we are limited to the concurrency we can support, or more accurately, we are limited to the benefit we can get from concurrency because end time taken by all tasks would be same as running them one by one. These are called **CPU bound** tasks and the processing is called **blocking request handling** because processor is blocked on performing the task. On the other hand, for tasks which don't need processor's internal capability and use **phenomenon that lives outside processor** (such as time and IO) would benefit a lot by concurrency if processor and the interface it is talking to provides an async model, i.e. the interface can take the request from processor and detach the proecssor from it and allow it to check the results at a later stage. Such tasks are called **IO bound** tasks and such processing is called **non-blocking request handling**.
+
+With that clatrity, we can discuss the two concurrency models - multi-threading and async. **Multi-threading** is built on threads API provided by OS and is geared for CPU bound tasks. Since there can be limited concurrency among such tasks, the thread is a heavy resource and the scheduler is geared to handle small number of them. **Async** on the other hand, is geared towards large number of IO bound tasks and can have (specifically in Rust) any kind of third party scheduler implementation. Interesting point is that the tasks themselves can be conurrently handled within a single thread as well as can be distributed among a finite number of threads.
+
+### Task Analysis
+Let's now understand all our IO bound tasks and what we know about their timing -
+- Terminal -
+    - Reading data from peer's connection - we don't know when peer may write to us
+    - Writing data to peer's connection - we don't know when we may have to write to peer to request a block since that directly depends on block's scheduling and availability from all peers
+- Dependent -
+    - Scheduling blocks - dependent on writing to peer
+    - Writing block on disk - dependent on data from peer
+    - Reading block on disk - dependent on data from peer - we have to read data to perform Sha1 verification
+
+For brevity, here are the main CPU bound tasks -
+- State management and decision making based on status
+- Sha1 verification of available blocks
+
+If we check IO bound tasks for a sample state of 5 active torrents with 5 peer connection each, we would have 25 peer connection at any given time and 5 torrent controllers to manage each torrent's state. This results in conecurreny factor of 55 (2 per peer for reader and writer + 1 per torrent controller = 2 * 25 + 5). Practically a torrent may make connections with ~10 peers and a client should be able to support ~10 torrents. That would make the concurrency factor to 210. We can clearly see that a thread based concurrency model would not be scalable for us. Because of clear unscalability of thread model and the IO-heavy nature of the application, async model is the right way to go.
+
+We will see later if we need to customise the thread pool to dedicatedly handle the CPU bound tasks for better performance. Not to miss another important goal of concurrency, i.e. better visibility of progress for user, all tasks have to be built in a way where they can be performed in chunks and status shown to user and then rechecked and continued. Ex.- when syncing data from disk on a subsequent run of application, if we sync read all downloaded files before showing any update to user, user won't have any idea of the execution, instead we make syncing a part of the refresh loop and sync files in chunks while maintaining the state of whether sync has been complete. Checkout [this commit](https://github.com/SaurabhGoyal/torrentrs/commit/a35b0a42f4f9361127ac962f0b7f3c13245f6dd4#diff-9ee8859317fd329dfe82b35c35148729c0147e4e98437d9639f70664c552ef14) where I added that change.
 
 ### Data Sharing
 Sharing data among concurrent tasks is tricky. I tried following three options -
@@ -129,8 +153,20 @@ Sharing data among concurrent tasks is tricky. I tried following three options -
     - Do note that channels themselves are built using a shared-memory concept but they still provide a better performance because they follow a relaxed consistency model by implementing it as a shared-queue with no guarantee on delivery timing and ordering of messages thus giving much better performance.
     - Another reason for performance is that generally a task's execution's involves reading data, doing some calculation and then updating the data with these 3 steps making the biggest part of task's time. In shared memory model, the data needs to be locked in all these three steps making the whole task a bottleneck compared to just the message passing instruction being locked.
 
-## Implementation
+### Reading Material
+- [Fearless Concurrency](https://doc.rust-lang.org/book/ch16-00-concurrency.html)
+- [Async](https://rust-lang.github.io/async-book/)
 
+
+## [In-Progress] Networking
+- Sockets
+- TCP, UDP
+- Http
+- uTP
+- Safety
+
+# [In-Progress] Implementation
+## All code is available at [https://github.com/SaurabhGoyal/torrentrs](https://github.com/SaurabhGoyal/torrentrs)
 
 <!-- Managing the life of things such as connection with peers, block-scheduler and torrent-state handler. Specifically below given parts -
     - Cardinality - Which entity are they mapped to, ex.- client / torrent / peer / block. Ex.- One peer controller per torrent<->peer combination. 
@@ -143,17 +179,9 @@ I am still working to add followings -
 - Bad peer blocking
 - Performance measurement
 - Performance improvement - memory footprint
-- UDP protocol support
-- Serving data
+- Serving data as a node
 
-# Appendix
-## Concurrency Primer
-Ideally, we want everything to run all the time parallelly. We can just run every task some amount, switch to another and keep going like this untill all tasks are complete. However, a blanket strategy of making every task concurrent is not efficient because of two factors -
-1. actual execution resource - This is always the processor, you are always bounded by the number of processors / cores you have in the system which is always limited and constant compared to the number of tasks you would want to parallelise. 
-2. dependency of each task - we need to see where we can save time in execution and that is where we need to check those dependencies of the task which are outside the processors' capability such as time, devide drivers, network etc.  Simple examples
-    - if two tasks say wait 10 second, the processor doesn't have to wait for 10 + 10 seconds, processor can trigger the tasks and parallelise the waiting part because the waiting (time increasing) is not happending inside the processor, the phenomenon lives outside the processor.
-    - if two tasks say to write a file each to a disk, the processor doesn't have to write them one by one, because that ,means processor has given data for first file to the disk driver and then waiting for the driver to finish. Processor can trigger the tasks, send the writing request to disk and then parallelise the waiting part because the waiting (for disk driver to complete writing) is not happending inside the processor, the phenomenon lives outside the processor.
-
-This means that if we have tasks which actually use the **processor's internal capability**, i.e. executing instructions, then we are limited to the concurrency we can support, or more accurately, we are limited to the benefit we can get from concurrency because end time taken by all tasks would be same as running them one by one. These are called **CPU bound** tasks and the processing is called **blocking request handling** because processor is blocked on performing the task. On the other hand, for tasks which don't need processor's internal capability and use **phenomenon that lives outside processor** (such as time and IO) would benefit a lot by concurrency if processor and the interface it is talking to provides an async model, i.e. the interface can take the request from processor and detach the proecssor from it and allow it to check the results at a later stage. Such tasks are called **IO bound** tasks and such processing is called **non-blocking request handling**.
-
-With that clatrity, we can discuss the two concurrency models - multi-threading and async. **Multi-threading** is built on threads API provided by OS and is geared for CPU bound tasks. Since there can be limited concurrency among such tasks, the thread is a heavy resource and the scheduler is geared to handle small number of them. **Async** on the other hand, is geared towards large number of IO bound tasks and can have (specifically in Rust) any kind of third party scheduler implementation. Interesting point is that the tasks themselves can be conurrently handled within a single thread as well as can be distributed among a finite number of threads.
+# Reading Material
+- [rqbit](https://github.com/ikatson/rqbit) - Another implementation of torrent client in Rust
+- [https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html](https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html)
+- [http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/](http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/)
