@@ -1,0 +1,900 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base" content="http://memoryjoint.com">
+
+    
+    <title>Memory Joint • [In-Progress] Implementing a Bittorrent Client</title>
+
+    
+    
+    
+
+    
+    <link rel="alternate" type="application/atom+xml" title="Memory Joint" href="http://memoryjoint.com/atom.xml">
+
+    
+    
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/inter_subset_en.css?h=d8cf4ad058d6c3a4015b">
+    
+
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/main.css?h=5e152d56b06b2cb54aee" />
+
+    <meta name="color-scheme" content="light dark" />
+        <meta name="description" content="Journey of writing a Bittorrent client in Rust" />
+        <meta property="og:description" content="Journey of writing a Bittorrent client in Rust" />
+
+    
+        <meta name="robots" content="index, nofollow" />
+    
+
+    <meta property="og:title" content="[In-Progress] Implementing a Bittorrent Client" />
+    <meta property="og:type" content="article" />
+
+    
+
+    <meta property="og:locale" content="en_GB" />
+
+    <meta property="og:url" content="http:&#x2F;&#x2F;memoryjoint.com&#x2F;blog&#x2F;bittorrent-client&#x2F;" /><meta property="og:site_name" content="Memory Joint"><meta http-equiv="Content-Security-Policy"
+content="default-src 'self';font-src &#x27;self&#x27; data:;img-src &#x27;self&#x27; https:&#x2F;&#x2F;* data:;media-src &#x27;self&#x27;;style-src &#x27;self&#x27;;frame-src player.vimeo.com https:&#x2F;&#x2F;www.youtube-nocookie.com;connect-src 'self';script-src 'self' 'self'">
+
+        <noscript><link rel="stylesheet" href="http://memoryjoint.com/no_js.css"/></noscript>
+        <script type="text/javascript" src="http://memoryjoint.com/js/initializeTheme.min.js"></script>
+        <script defer src="http://memoryjoint.com/js/themeSwitcher.min.js"></script></head>
+
+
+<body>
+    <header>
+    <nav class="navbar">
+        <div class="nav-title">
+            <a class="home-title" href=http://memoryjoint.com>Memory Joint</a>
+        </div>
+            <div class="nav-navs">
+                <ul>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/blog/">
+                                blog
+                                </a>
+                            </li>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/about/">
+                                about
+                                </a>
+                            </li>
+                        
+
+                    
+                    
+
+                    <li class="theme-switcher-wrapper js"><div
+        title="Toggle dark&#x2F;light mode"
+        class="theme-switcher"
+        tabindex="0"
+        role="button"
+        aria-label="Toggle dark mode"
+        aria-pressed="false">
+    </div><div
+        title="Reset mode to default"
+        class="theme-resetter"
+        tabindex="0"
+        role="button"
+        aria-hidden="true"
+        aria-label="Reset mode to default">
+    </div>
+
+</li>
+</ul>
+            </div>
+        
+    </nav>
+</header>
+
+    <div class="content">
+
+        
+        
+
+
+
+
+<main>
+    <article>
+        <h1 class="article-title">
+            [In-Progress] Implementing a Bittorrent Client
+        </h1>
+
+        <ul class="meta"><li>18th Jul 2024</li>&nbsp;•&nbsp;<li title="2929 words">15 min read</li>&nbsp;•&nbsp;<li>Tags:&nbsp;</li><li><a href=http://memoryjoint.com/tags/torrent/>torrent</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/concurrency/>concurrency</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/networking/>networking</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/io/>io</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/rust/>rust</a></li></ul><ul class="meta last-updated"><li>Updated on 26th Jul 2024</li>
+                
+                
+            
+        </ul>
+
+        
+
+        
+        
+            
+
+<div class="toc-container">
+    
+        <h3>Table of Contents</h3>
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#bittorrent">Bittorrent</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#what-is-it">What is it?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#how-is-it-different-from-simple-http">How is it different from simple HTTP?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#how-does-it-work">How does it work?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#why-build-a-client">Why build a client?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material">Reading Material</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#design">Design</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#entities">Entities</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#block">Block</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#peer">Peer</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#torrent">Torrent</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#client">Client</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#actors">Actors</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#peer-controller">Peer Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#torrent-controller">Torrent Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#client-controller">Client Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#concurrency">Concurrency</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#primer">Primer</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#task-analysis">Task Analysis</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#data-sharing">Data Sharing</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material-1">Reading Material</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#in-progress-networking">[In-Progress] Networking</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#in-progress-implementation">[In-Progress] Implementation</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#all-code-is-available-at-https-github-com-saurabhgoyal-torrentrs">All code is available at https:&#x2F;&#x2F;github.com&#x2F;SaurabhGoyal&#x2F;torrentrs</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#next-steps">Next Steps</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material-2">Reading Material</a>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+        
+
+        <section class="body">
+            
+            
+            <h1 id="bittorrent"><a class="header-anchor no-hover-padding" href="#bittorrent" aria-label="Anchor link for: bittorrent"><span class="link-icon" aria-hidden="true"></span></a>
+Bittorrent</h1>
+<h2 id="what-is-it"><a class="header-anchor no-hover-padding" href="#what-is-it" aria-label="Anchor link for: what-is-it"><span class="link-icon" aria-hidden="true"></span></a>
+What is it?</h2>
+<p>It is a protocol to exchange data chunks with other people on a network, generally internet.</p>
+<h2 id="how-is-it-different-from-simple-http"><a class="header-anchor no-hover-padding" href="#how-is-it-different-from-simple-http" aria-label="Anchor link for: how-is-it-different-from-simple-http"><span class="link-icon" aria-hidden="true"></span></a>
+How is it different from simple HTTP?</h2>
+<ul>
+<li>HTTP requires client server model where you (client) download data from a data owner (server) that you know about.</li>
+<li>Bittorrent enables a lot of people in the internet to collaboratively make the file available to a lot of other people without one server being a bottleneck or owner. Essentially one file can have many servers instead of one.</li>
+<li>This results in higher availability and download speed of the file.</li>
+</ul>
+<h2 id="how-does-it-work"><a class="header-anchor no-hover-padding" href="#how-does-it-work" aria-label="Anchor link for: how-does-it-work"><span class="link-icon" aria-hidden="true"></span></a>
+How does it work?</h2>
+<ul>
+<li>This is the best part - this is one of the simplest protocols I have ever read. This is essentially a simple logical solution to how to achieve a situation where multiple people in a network are requesting and serving a file to each other.</li>
+<li>The whole specification is listed <a href="http://bittorrent.org/beps/bep_0003.html">here officially</a> and <a href="https://wiki.theory.org/BitTorrentSpecification">here unofficially (but more verbose)</a> but I would give a high level view here -
+<ul>
+<li>You are a peer, looking for a file.</li>
+<li>You need a unique-id for the file and someone with whom you can ask about servers of that file.</li>
+<li>These two pieces of information is available in Torrent file / magnet link. You parse that file / link to fetch above two, i.e. unique-id (info-hash) and someone to enquire sources (tracker).</li>
+<li>You ask tracker to provide a list of sources (IP addresses of other people in the network) who can give file.</li>
+<li>You ping these peers and say that you need data for this file, if peer has it, they ping bank, i.e. handshake completed.</li>
+<li>You ask for file data in smaller chunks from peers.</li>
+<li>Peers send thbe requested smaller chunks if they have.</li>
+<li>Once all chunks have been downloaded, you combine them into the file. !!! You have the file now. !!!</li>
+<li>All this meanwhile, peer keeps telling you, which specific chunks it has and whether it can currently serve you those or not.</li>
+<li>And the most important part, YOU ARE ALSO A PEER, serving file chunks that you have to other people requesting them.</li>
+</ul>
+</li>
+</ul>
+<h2 id="why-build-a-client"><a class="header-anchor no-hover-padding" href="#why-build-a-client" aria-label="Anchor link for: why-build-a-client"><span class="link-icon" aria-hidden="true"></span></a>
+Why build a client?</h2>
+<p>Building a robust client requires dealing with following concepts in depth -</p>
+<ul>
+<li><strong>Reading protocol specifications and following them -</strong> As insignificant as it sounds, most of my wasted time during implementation was result of me not reading the specification thoroughly enough and missing understanding the right sequence of messages to be sent to peer and having wrong expectations from the peer without a clear way to debug.</li>
+<li><strong>TCP/UDP and sockets -</strong> It requires a lot of data transfer and packet exchanges which need to be raw TCP/UDP messages. For them to be correctly perceived by peer, you need to form them correctly. While you may be interacting with the networking APIs of the kernel via the networking APIs provided by your programming language's libraries, you would have to understand how sockets work, how they are made into blocking vs non-blocking to be able to correctly send and receive data at the same time from the peer.</li>
+<li><strong>IO -</strong> You would have to write a lot of data into disk, it will be made available in chunks and then verified for integrity and merged into the output file. This can happen for multiple files concurrently. This would also require you to be able to continue from where you left in case of failures or client closures. This requires understanding IO APIs and FS APIs in detail.</li>
+<li><strong>Concurrency -</strong> The application is going to be IO heavy since most of time would be spent in either downloading data from network (peers) or writing data to disk. This makes it a good and almost indespensable case for adding concurrency to application to get any practical performance. There would be atleast two aspects that need to be concurrent - 1) Requesting and downloading chunks from peers 2) Managing multiple peers at the same time.</li>
+</ul>
+<h2 id="reading-material"><a class="header-anchor no-hover-padding" href="#reading-material" aria-label="Anchor link for: reading-material"><span class="link-icon" aria-hidden="true"></span></a>
+Reading Material</h2>
+<ul>
+<li><a href="http://bittorrent.org/beps/bep_0003.html">Bittorrent official specification</a></li>
+<li><a href="https://wiki.theory.org/BitTorrentSpecification#Identification">Bittorrent unofficial specification</a></li>
+</ul>
+<h1 id="design"><a class="header-anchor no-hover-padding" href="#design" aria-label="Anchor link for: design"><span class="link-icon" aria-hidden="true"></span></a>
+Design</h1>
+<h2 id="entities"><a class="header-anchor no-hover-padding" href="#entities" aria-label="Anchor link for: entities"><span class="link-icon" aria-hidden="true"></span></a>
+Entities</h2>
+<p>Let's first understand what entities we are dealing with. By entities I mean objects that are alive, i.e. require a lifecycle / state management.</p>
+<h3 id="block"><a class="header-anchor no-hover-padding" href="#block" aria-label="Anchor link for: block"><span class="link-icon" aria-hidden="true"></span></a>
+Block</h3>
+<p>This is the smallest chunk of data that you request from peers and combine them into the files one needs. A block of data may go through following two sets of lifecycle stages at any point of time -</p>
+<ul>
+<li>Data -
+<ul>
+<li>Pending for download</li>
+<li>Requested from peer (enqueued)</li>
+<li>Persisted temporarily (in a dedicated file of its own, pending merge)</li>
+<li>Persisted in file (in the desired output file)</li>
+</ul>
+</li>
+<li>Integrity check -
+<ul>
+<li>Not verified</li>
+<li>Verified</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://www.plantuml.com/plantuml/svg/PP4nQ_Gm38Pt_mgHwViA7Rg68nmTEdLewT6bT71b-I8kSPnO2To_hnmdb5u7Wz3p1BqlEIQnaynzPuIb8wWUkm4lyCoUy8eTLSQe8GfUA3WEvmfiWXZsxUjCCxbrEVwOK-8avE14VImV9FbBdpZORiD-n-yqiMUqmaC0R0algx7W9Y0S3jWEZDGqnfYFkq-uRtAW6F8mch664_UaTX_Xtvpqa1ycSFGrp06rmNypghb6qgSsgUXPoqShRTuLx8s-kgIyvIeicFa-BhXEUQZXhRKF9NivRSK21w7pn78rnOoXXbzTlTKJRgDQwmP7cvBY8mMdV-iR" alt="State diagram" /></p>
+<h3 id="peer"><a class="header-anchor no-hover-padding" href="#peer" aria-label="Anchor link for: peer"><span class="link-icon" aria-hidden="true"></span></a>
+Peer</h3>
+<p>This is the TCP/UDP connection you maintain with a potential peer for fetching the blocks from. Other than the connection, interest status, choking status and a map of which blocks peer has is maintained in the state as well. A peer connection goes through following stages -</p>
+<ul>
+<li>Initiate a connection</li>
+<li>Complete handshake for a specific torrent.</li>
+<li>Express interest</li>
+<li>Update their block availability</li>
+<li>Request piece</li>
+<li>Save piece</li>
+<li>Connection ended</li>
+</ul>
+<p>While a connection is not torrent specific, handshake between peers is torrent specific and creates a virtual session where every subsequent message would belong for the torrent on which peers handshook on and the messages themselves won't have any information of the torrent. This effectively means one connection per torrent per peer.</p>
+<p><img src="https://www.plantuml.com/plantuml/svg/NL2nJWCn3Dtp5LOdG5Ji7L2bBbHYgA1Cb26Nk2IwEmV5ZghxUvnSZqei5_lPxztpsxBOB6KSZ4GP45O7n0olyOnkSWEkZD45KVnk__C8XvJbVWMM8IxuSNU0NI929p5HcxbbzcB9Sx0zDZZmWh-7T84z2MPacUL8bk47kP1wzD1DKCsqUVdJlFqBZfZ7I8hwjYFQ6cC-7xvWlNvMXn7qSSPje9faoMX7AApIvvIXIn908G_g4Yuv2XhNc4t8LR9Q3bmBzQVL1jvqVm99e6TbX16PxJVoYQgY1DHHpjYMOL5IRgsBgzMctGI4wBdgzAHHIB029vfIWQeQhycWNxXDfxZ_v3971KfKUeTgOcwS9R3Sjpkz5QlSssNrev744LCHUDAR6Ekx6nBFiRiX8abRl4QvHV9b77u1" alt="State diagram" /></p>
+<h3 id="torrent"><a class="header-anchor no-hover-padding" href="#torrent" aria-label="Anchor link for: torrent"><span class="link-icon" aria-hidden="true"></span></a>
+Torrent</h3>
+<p>This is the overall envelope for the torrent. In terms of work, it should provide -</p>
+<ul>
+<li>Scheduling of blocks</li>
+<li>Handling verification and persistence of blocks</li>
+<li>Merging blocks into the file output</li>
+</ul>
+<p>It can also provide features such as state persistence across application launches as to continue the download from where it was left.</p>
+<h3 id="client"><a class="header-anchor no-hover-padding" href="#client" aria-label="Anchor link for: client"><span class="link-icon" aria-hidden="true"></span></a>
+Client</h3>
+<p>This is just an interface to add, start, delete and continue torrents using the underlying torrent API. It can also provides a monitoring interface such as a rendered view for all the updates happening under the torrents.</p>
+<h2 id="actors"><a class="header-anchor no-hover-padding" href="#actors" aria-label="Anchor link for: actors"><span class="link-icon" aria-hidden="true"></span></a>
+Actors</h2>
+<p>We need following components to perform the end to end download operation -</p>
+<h3 id="peer-controller"><a class="header-anchor no-hover-padding" href="#peer-controller" aria-label="Anchor link for: peer-controller"><span class="link-icon" aria-hidden="true"></span></a>
+Peer Controller</h3>
+<p>For given peer ip, port and torrent, this will perform following actions -</p>
+<ul>
+<li>Initiate and maintain connection with peer.</li>
+<li>Maintain and update state of interest, choking and piece-availability-map (bitfield).</li>
+<li>Receive commands from other controllers to request piece from peer.</li>
+<li>Receive and download piece from peer and send the piece data to other controllers for persistence and verification.</li>
+</ul>
+<h3 id="torrent-controller"><a class="header-anchor no-hover-padding" href="#torrent-controller" aria-label="Anchor link for: torrent-controller"><span class="link-icon" aria-hidden="true"></span></a>
+Torrent Controller</h3>
+<p>For given torrent metainfo source (torrent file or magnet url), this will perform following actions -</p>
+<ul>
+<li>Parse metainfo from the source using bencode parser.</li>
+<li>Initiate and sync torrent state with the data that is already present on the disk.</li>
+<li>Fetch updated peer list from trackers.</li>
+<li>Schedule pending blocks for download by sending commands to peer controller.</li>
+<li>Initiate and maintain peer controllers as part of scheduling (this, instead of peer connection pooling, is done as to make a peer connection only if needed for a block, saves a lot of socket count).</li>
+<li>Persist downloaded blocks when recieved from peer controllers.</li>
+<li>Verify persisted blocks using Sha1.</li>
+<li>Write files as and when all blocks for the file have been persisted.</li>
+</ul>
+<h3 id="client-controller"><a class="header-anchor no-hover-padding" href="#client-controller" aria-label="Anchor link for: client-controller"><span class="link-icon" aria-hidden="true"></span></a>
+Client Controller</h3>
+<p>This will perform following actions -</p>
+<ul>
+<li>Initialise and sync client state with the data on disk for info of already added torrents and their status.</li>
+<li>Provide APIs to add, pause, resume and remove torrents.</li>
+<li>Render the state into UI.</li>
+</ul>
+<h2 id="concurrency"><a class="header-anchor no-hover-padding" href="#concurrency" aria-label="Anchor link for: concurrency"><span class="link-icon" aria-hidden="true"></span></a>
+Concurrency</h2>
+<h3 id="primer"><a class="header-anchor no-hover-padding" href="#primer" aria-label="Anchor link for: primer"><span class="link-icon" aria-hidden="true"></span></a>
+Primer</h3>
+<p>Ideally, we want everything to run all the time parallelly. We can just run every task some amount, switch to another and keep going like this untill all tasks are complete. However, a blanket strategy of making every task concurrent is not efficient because of two factors -</p>
+<ol>
+<li>actual execution resource - This is always the processor, you are always bounded by the number of processors / cores you have in the system which is always limited and constant compared to the number of tasks you would want to parallelise.</li>
+<li>dependency of each task - we need to see where we can save time in execution and that is where we need to check those dependencies of the task which are outside the processors' capability such as time, devide drivers, network etc.  Simple examples
+<ul>
+<li>if two tasks say wait 10 second, the processor doesn't have to wait for 10 + 10 seconds, processor can trigger the tasks and parallelise the waiting part because the waiting (time increasing) is not happending inside the processor, the phenomenon lives outside the processor.</li>
+<li>if two tasks say to write a file each to a disk, the processor doesn't have to write them one by one, because that ,means processor has given data for first file to the disk driver and then waiting for the driver to finish. Processor can trigger the tasks, send the writing request to disk and then parallelise the waiting part because the waiting (for disk driver to complete writing) is not happending inside the processor, the phenomenon lives outside the processor.</li>
+</ul>
+</li>
+</ol>
+<p>This means that if we have tasks which actually use the <strong>processor's internal capability</strong>, i.e. executing instructions, then we are limited to the concurrency we can support, or more accurately, we are limited to the benefit we can get from concurrency because end time taken by all tasks would be same as running them one by one. These are called <strong>CPU bound</strong> tasks and the processing is called <strong>blocking request handling</strong> because processor is blocked on performing the task. On the other hand, for tasks which don't need processor's internal capability and use <strong>phenomenon that lives outside processor</strong> (such as time and IO) would benefit a lot by concurrency if processor and the interface it is talking to provides an async model, i.e. the interface can take the request from processor and detach the proecssor from it and allow it to check the results at a later stage. Such tasks are called <strong>IO bound</strong> tasks and such processing is called <strong>non-blocking request handling</strong>.</p>
+<p>With that clatrity, we can discuss the two concurrency models - multi-threading and async. <strong>Multi-threading</strong> is built on threads API provided by OS and is geared for CPU bound tasks. Since there can be limited concurrency among such tasks, the thread is a heavy resource and the scheduler is geared to handle small number of them. <strong>Async</strong> on the other hand, is geared towards large number of IO bound tasks and can have (specifically in Rust) any kind of third party scheduler implementation. Interesting point is that the tasks themselves can be conurrently handled within a single thread as well as can be distributed among a finite number of threads.</p>
+<h3 id="task-analysis"><a class="header-anchor no-hover-padding" href="#task-analysis" aria-label="Anchor link for: task-analysis"><span class="link-icon" aria-hidden="true"></span></a>
+Task Analysis</h3>
+<p>Let's now understand all our IO bound tasks and what we know about their timing -</p>
+<ul>
+<li>Terminal -
+<ul>
+<li>Reading data from peer's connection - we don't know when peer may write to us</li>
+<li>Writing data to peer's connection - we don't know when we may have to write to peer to request a block since that directly depends on block's scheduling and availability from all peers</li>
+</ul>
+</li>
+<li>Dependent -
+<ul>
+<li>Scheduling blocks - dependent on writing to peer</li>
+<li>Writing block on disk - dependent on data from peer</li>
+<li>Reading block on disk - dependent on data from peer - we have to read data to perform Sha1 verification</li>
+</ul>
+</li>
+</ul>
+<p>For brevity, here are the main CPU bound tasks -</p>
+<ul>
+<li>State management and decision making based on status</li>
+<li>Sha1 verification of available blocks</li>
+</ul>
+<p>If we check IO bound tasks for a sample state of 5 active torrents with 5 peer connection each, we would have 25 peer connection at any given time and 5 torrent controllers to manage each torrent's state. This results in conecurreny factor of 55 (2 per peer for reader and writer + 1 per torrent controller = 2 * 25 + 5). Practically a torrent may make connections with ~10 peers and a client should be able to support ~10 torrents. That would make the concurrency factor to 210. We can clearly see that a thread based concurrency model would not be scalable for us. Because of clear unscalability of thread model and the IO-heavy nature of the application, async model is the right way to go.</p>
+<p>We will see later if we need to customise the thread pool to dedicatedly handle the CPU bound tasks for better performance. Not to miss another important goal of concurrency, i.e. better visibility of progress for user, all tasks have to be built in a way where they can be performed in chunks and status shown to user and then rechecked and continued. Ex.- when syncing data from disk on a subsequent run of application, if we sync read all downloaded files before showing any update to user, user won't have any idea of the execution, instead we make syncing a part of the refresh loop and sync files in chunks while maintaining the state of whether sync has been complete. Checkout <a href="https://github.com/SaurabhGoyal/torrentrs/commit/a35b0a42f4f9361127ac962f0b7f3c13245f6dd4#diff-9ee8859317fd329dfe82b35c35148729c0147e4e98437d9639f70664c552ef14">this commit</a> where I added that change.</p>
+<h3 id="data-sharing"><a class="header-anchor no-hover-padding" href="#data-sharing" aria-label="Anchor link for: data-sharing"><span class="link-icon" aria-hidden="true"></span></a>
+Data Sharing</h3>
+<p>Sharing data among concurrent tasks is tricky. I tried following three options -</p>
+<ul>
+<li><strong>Shared memory with exclusive locks (Mutex) -</strong> I shared the torrent state among all peers and the torrent controller. It meant that anytime there was an update for torrent state (ex.- a block has been received from peer), the whole torrent state was locked and thus all other peers as well as torrent controller was blocked on it and waiting and could not perform any operation. While it worked with small number of peers and a waiting time of seconds among execution of each task, this eventually started resulting in too much waiting on the locks and bad performance when I increased number of peers and made refresh rate faster.</li>
+<li><strong>Shared memory with read write (RWLock) locks on individual blocks -</strong> I then tried making locks granular by having lock per block instead of on whole torrent. While theoretically it should reduce blocked time on locks, it actually reduced the overall performance by a significant margin. The reason was that the torrent controller still needed to read lots of blocks to decide which ones to schedule (requires reading all blocks), which ones to write (requires reading all blocks) and which ones to verify when a block is received (requires reading all sibling blocks of a parent concept called piece). This meant that even now the locks were being held and waited upon for almost all of blocks except with the overhead of having a lock for each individual block which can be huge in number.</li>
+<li><strong>Message passing (using channels) -</strong> I checked possible optimisations and realised two things - 1) the cost of updating the data that every task needs is quite low, it's in memory and finite (Do note that blocks actual data is always written to disk asap and not retained in memory for long) 2) the data consistency among tasks can be eventual and it would not cause a huge performance issue, i.e. even if a peer has old information about a block and downloads it again, it does not impact the system as the torrent controller would discard the data when sent by peer controller. So I switched to <strong>message-passing model (just a way of sharing a copy of the data instead of the shared memory reference)</strong> where every task maintains its own state and on update sends a message to other layers via a concept called <strong>channels</strong>. This makes the system completely lock free and enhances the performance by a lot, essentially no task is blocked on any other task for performing its functions.
+<ul>
+<li>Do note that channels themselves are built using a shared-memory concept but they still provide a better performance because they follow a relaxed consistency model by implementing it as a shared-queue with no guarantee on delivery timing and ordering of messages thus giving much better performance.</li>
+<li>Another reason for performance is that generally a task's execution's involves reading data, doing some calculation and then updating the data with these 3 steps making the biggest part of task's time. In shared memory model, the data needs to be locked in all these three steps making the whole task a bottleneck compared to just the message passing instruction being locked.</li>
+</ul>
+</li>
+</ul>
+<h3 id="reading-material-1"><a class="header-anchor no-hover-padding" href="#reading-material-1" aria-label="Anchor link for: reading-material-1"><span class="link-icon" aria-hidden="true"></span></a>
+Reading Material</h3>
+<ul>
+<li><a href="https://doc.rust-lang.org/book/ch16-00-concurrency.html">Fearless Concurrency</a></li>
+<li><a href="https://rust-lang.github.io/async-book/">Async</a></li>
+</ul>
+<h2 id="in-progress-networking"><a class="header-anchor no-hover-padding" href="#in-progress-networking" aria-label="Anchor link for: in-progress-networking"><span class="link-icon" aria-hidden="true"></span></a>
+[In-Progress] Networking</h2>
+<ul>
+<li>Sockets</li>
+<li>TCP, UDP</li>
+<li>Http</li>
+<li>uTP</li>
+<li>Safety</li>
+</ul>
+<h1 id="in-progress-implementation"><a class="header-anchor no-hover-padding" href="#in-progress-implementation" aria-label="Anchor link for: in-progress-implementation"><span class="link-icon" aria-hidden="true"></span></a>
+[In-Progress] Implementation</h1>
+<h2 id="all-code-is-available-at-https-github-com-saurabhgoyal-torrentrs"><a class="header-anchor no-hover-padding" href="#all-code-is-available-at-https-github-com-saurabhgoyal-torrentrs" aria-label="Anchor link for: all-code-is-available-at-https-github-com-saurabhgoyal-torrentrs"><span class="link-icon" aria-hidden="true"></span></a>
+All code is available at <a href="https://github.com/SaurabhGoyal/torrentrs">https://github.com/SaurabhGoyal/torrentrs</a></h2>
+<!-- Managing the life of things such as connection with peers, block-scheduler and torrent-state handler. Specifically below given parts -
+    - Cardinality - Which entity are they mapped to, ex.- client / torrent / peer / block. Ex.- One peer controller per torrent<->peer combination. 
+    - State management - How they would hold the state they are working on and how they would sync with state of other components. Ex.- Shared state vs message passing.
+    - Shutdown - Finding the right set of conditions to shutdown a component gracefully. Ex.- Closing the torrent controller if all files have been downloaded, closing a peer controller if TCP timed out.   -->
+<h1 id="next-steps"><a class="header-anchor no-hover-padding" href="#next-steps" aria-label="Anchor link for: next-steps"><span class="link-icon" aria-hidden="true"></span></a>
+Next Steps</h1>
+<p>I am still working to add followings -</p>
+<ul>
+<li>DHT protocol support</li>
+<li>Bad peer blocking</li>
+<li>Performance measurement</li>
+<li>Performance improvement - memory footprint</li>
+<li>Serving data as a node</li>
+</ul>
+<h1 id="reading-material-2"><a class="header-anchor no-hover-padding" href="#reading-material-2" aria-label="Anchor link for: reading-material-2"><span class="link-icon" aria-hidden="true"></span></a>
+Reading Material</h1>
+<ul>
+<li><a href="https://github.com/ikatson/rqbit">rqbit</a> - Another implementation of torrent client in Rust</li>
+<li><a href="https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html">https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html</a></li>
+<li><a href="http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/">http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/</a></li>
+</ul>
+
+        </section>
+
+        
+        
+        
+        
+
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+
+        
+        
+
+        
+                
+                
+                    
+                        
+                        
+                        
+                    
+                    
+                        
+                        
+                        
+                    
+                
+                
+            <nav class="full-width article-navigation">
+                <div><a href="http://memoryjoint.com/blog/virtual-machine/" aria-label="Next" aria-describedby="left_title"><span class="arrow">←</span>&nbsp;Next</a>
+                <p aria-hidden="true" id="left_title">Virtual Machine</p></div>
+                <div><a href="http://memoryjoint.com/blog/digital-machine-layer-by-layer/" aria-label="Prev" aria-describedby="right_title">Prev&nbsp;<span class="arrow">→</span></a>
+                <p aria-hidden="true" id="right_title">Digital Machine Layer By Layer</p></div>
+            </nav>
+        
+
+    </article>
+</main>
+
+    <div id="button-container">
+        
+        
+            <div id="toc-floating-container">
+                <input type="checkbox" id="toc-toggle" class="toggle"/>
+                <label for="toc-toggle" class="overlay"></label>
+                <label for="toc-toggle" id="toc-button" class="button" title="Toggle Table of Contents">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M414.82-193.094q-18.044 0-30.497-12.32-12.453-12.319-12.453-30.036t12.453-30.086q12.453-12.37 30.497-12.37h392.767q17.237 0 29.927 12.487 12.69 12.486 12.69 30.203 0 17.716-12.69 29.919t-29.927 12.203H414.82Zm0-244.833q-18.044 0-30.497-12.487Q371.87-462.9 371.87-480.45t12.453-29.92q12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.511 12.69 12.512 12.69 29.845 0 17.716-12.69 30.086-12.69 12.37-29.927 12.37H414.82Zm0-245.167q-18.044 0-30.497-12.32t-12.453-30.037q0-17.716 12.453-30.086 12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.486 12.69 12.487 12.69 30.203 0 17.717-12.69 29.92-12.69 12.203-29.927 12.203H414.82ZM189.379-156.681q-32.652 0-55.878-22.829t-23.226-55.731q0-32.549 23.15-55.647 23.151-23.097 55.95-23.097 32.799 0 55.313 23.484 22.515 23.484 22.515 56.246 0 32.212-22.861 54.893-22.861 22.681-54.963 22.681Zm0-245.167q-32.652 0-55.878-23.134-23.226-23.135-23.226-55.623 0-32.487 23.467-55.517t56.12-23.03q32.102 0 54.721 23.288 22.62 23.288 22.62 55.775 0 32.488-22.861 55.364-22.861 22.877-54.963 22.877Zm-.82-244.833q-32.224 0-55.254-23.288-23.03-23.289-23.03-55.623 0-32.333 23.271-55.364 23.272-23.03 55.495-23.03 32.224 0 55.193 23.288 22.969 23.289 22.969 55.622 0 32.334-23.21 55.364-23.21 23.031-55.434 23.031Z"/></svg>
+                </label>
+                <div class="toc-content">
+                    
+
+<div class="toc-container">
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#bittorrent">Bittorrent</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#what-is-it">What is it?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#how-is-it-different-from-simple-http">How is it different from simple HTTP?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#how-does-it-work">How does it work?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#why-build-a-client">Why build a client?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material">Reading Material</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#design">Design</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#entities">Entities</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#block">Block</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#peer">Peer</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#torrent">Torrent</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#client">Client</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#actors">Actors</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#peer-controller">Peer Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#torrent-controller">Torrent Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#client-controller">Client Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#concurrency">Concurrency</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#primer">Primer</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#task-analysis">Task Analysis</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#data-sharing">Data Sharing</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material-1">Reading Material</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#in-progress-networking">[In-Progress] Networking</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#in-progress-implementation">[In-Progress] Implementation</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/bittorrent-client/#all-code-is-available-at-https-github-com-saurabhgoyal-torrentrs">All code is available at https:&#x2F;&#x2F;github.com&#x2F;SaurabhGoyal&#x2F;torrentrs</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#next-steps">Next Steps</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/bittorrent-client/#reading-material-2">Reading Material</a>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+                </div>
+            </div>
+        
+
+        
+        
+
+        
+        <a href="#" id="top-button" class="no-hover-padding" title="Go to the top of the page">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"/></svg>
+        </a>
+    </div>
+
+
+<span id="copy-success" class="hidden">
+        Copied!
+    </span>
+    <span id="copy-init" class="hidden">
+        Copy code to clipboard
+    </span>
+    <script defer src="http://memoryjoint.com/js/copyCodeToClipboard.min.js"></script>
+    </div>
+    <footer>
+    <section>
+        <nav class="socials nav-navs">
+                <ul>
+                    
+                    
+                    
+                    
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://github.com/SaurabhGoyal/>
+                                    <img alt=github title=github src="http://memoryjoint.com/social_icons/github.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://gitlab.com/saurabh.2561/>
+                                    <img alt=gitlab title=gitlab src="http://memoryjoint.com/social_icons/gitlab.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://twitter.com/notintobuying>
+                                    <img alt=twitter title=twitter src="http://memoryjoint.com/social_icons/twitter.svg">
+                                </a>
+                            </li>
+                        
+                    
+                </ul>
+            
+        </nav>
+
+        
+        <nav class="nav-navs">
+        </nav>
+
+        <div class="credits">
+            <small>
+                
+
+                
+                Powered by
+                <a rel=""  href="https://www.getzola.org">Zola</a>
+                &amp;
+                <a rel=""  href="https://github.com/welpo/tabi">tabi</a>
+
+                </small>
+        </div>
+    </section>
+
+    </footer>
+
+</body>
+
+</html>

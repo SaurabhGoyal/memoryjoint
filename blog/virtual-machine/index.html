@@ -1,0 +1,1067 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base" content="http://memoryjoint.com">
+
+    
+    <title>Memory Joint • Virtual Machine</title>
+
+    
+    
+    
+
+    
+    <link rel="alternate" type="application/atom+xml" title="Memory Joint" href="http://memoryjoint.com/atom.xml">
+
+    
+    
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/inter_subset_en.css?h=d8cf4ad058d6c3a4015b">
+    
+
+    
+        <link rel="stylesheet" href="http://memoryjoint.com/main.css?h=5e152d56b06b2cb54aee" />
+
+    <meta name="color-scheme" content="light dark" />
+        <meta name="description" content="Writing a 16 bit virtual machine in Rust - Taught me more than I expected" />
+        <meta property="og:description" content="Writing a 16 bit virtual machine in Rust - Taught me more than I expected" />
+
+    
+        <meta name="robots" content="index, nofollow" />
+    
+
+    <meta property="og:title" content="Virtual Machine" />
+    <meta property="og:type" content="article" />
+
+    
+
+    <meta property="og:locale" content="en_GB" />
+
+    <meta property="og:url" content="http:&#x2F;&#x2F;memoryjoint.com&#x2F;blog&#x2F;virtual-machine&#x2F;" /><meta property="og:site_name" content="Memory Joint"><meta http-equiv="Content-Security-Policy"
+content="default-src 'self';font-src &#x27;self&#x27; data:;img-src &#x27;self&#x27; https:&#x2F;&#x2F;* data:;media-src &#x27;self&#x27;;style-src &#x27;self&#x27;;frame-src player.vimeo.com https:&#x2F;&#x2F;www.youtube-nocookie.com;connect-src 'self';script-src 'self' 'self'">
+
+        <noscript><link rel="stylesheet" href="http://memoryjoint.com/no_js.css"/></noscript>
+        <script type="text/javascript" src="http://memoryjoint.com/js/initializeTheme.min.js"></script>
+        <script defer src="http://memoryjoint.com/js/themeSwitcher.min.js"></script></head>
+
+
+<body>
+    <header>
+    <nav class="navbar">
+        <div class="nav-title">
+            <a class="home-title" href=http://memoryjoint.com>Memory Joint</a>
+        </div>
+            <div class="nav-navs">
+                <ul>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/blog/">
+                                blog
+                                </a>
+                            </li>
+                        
+                            <li>
+                                
+                                <a class="nav-links no-hover-padding" href="http://memoryjoint.com/about/">
+                                about
+                                </a>
+                            </li>
+                        
+
+                    
+                    
+
+                    <li class="theme-switcher-wrapper js"><div
+        title="Toggle dark&#x2F;light mode"
+        class="theme-switcher"
+        tabindex="0"
+        role="button"
+        aria-label="Toggle dark mode"
+        aria-pressed="false">
+    </div><div
+        title="Reset mode to default"
+        class="theme-resetter"
+        tabindex="0"
+        role="button"
+        aria-hidden="true"
+        aria-label="Reset mode to default">
+    </div>
+
+</li>
+</ul>
+            </div>
+        
+    </nav>
+</header>
+
+    <div class="content">
+
+        
+        
+
+
+
+
+<main>
+    <article>
+        <h1 class="article-title">
+            Virtual Machine
+        </h1>
+
+        <ul class="meta"><li>12th Aug 2024</li>&nbsp;•&nbsp;<li title="4032 words">21 min read</li>&nbsp;•&nbsp;<li>Tags:&nbsp;</li><li><a href=http://memoryjoint.com/tags/abstraction/>abstraction</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/machine/>machine</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/processor/>processor</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/assembly/>assembly</a>,&nbsp;</li><li><a href=http://memoryjoint.com/tags/virtualization/>virtualization</a></li></ul><ul class="meta last-updated"><li>Updated on 22nd Aug 2024</li>
+                
+                
+            
+        </ul>
+
+        
+
+        
+        
+            
+
+<div class="toc-container">
+    
+        <h3>Table of Contents</h3>
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#abstraction">Abstraction</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#virtual-machine">Virtual Machine</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#implementation">Implementation</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#what-value-and-api-does-a-vm-provide">What value and API does a VM provide?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#how-does-it-work-internally">How does it work internally?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#components">Components</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#machine">Machine</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#interrupt-controller">Interrupt Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#exmaple-flow">Exmaple Flow</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#setting-up-the-machine-and-the-program">Setting up the machine and the program</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#running-the-program-and-handling-interrupts">Running the program and handling interrupts</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#doubts">Doubts</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#in-depth">In-Depth</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#memory-access-control-via-segmentation">Memory Access Control via Segmentation</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#interrupt-handling">Interrupt Handling</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#example-run">Example Run</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#instruction-set">Instruction-Set</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#general-syntax">General syntax</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#commands">Commands</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#data-opcode-1110">Data (OpCode - 1110)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#add-opcode-0001">ADD (OpCode - 0001)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#load-opcode-0010">Load (OpCode - 0010)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#loadindirect-opcode-0011">LoadIndirect (OpCode - 0011)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#loadregister-opcode-0110">LoadRegister (OpCode - 0110)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#jump-opcode-0100">Jump (OpCode - 0100)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#jumpifsign-opcode-0101">JumpIfSign (OpCode - 0101)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#trap-opcode-1111">Trap (OpCode - 1111)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#references">References</a>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+        
+
+        <section class="body">
+            
+            
+            <h1 id="abstraction"><a class="header-anchor no-hover-padding" href="#abstraction" aria-label="Anchor link for: abstraction"><span class="link-icon" aria-hidden="true"></span></a>
+Abstraction</h1>
+<p>If one thinks about it, abstraction is nothing but the most efficient form of trade contract. In this contract a seller of a service can announce the services it is offering with every single detail captured in it and interested customers can avail it <strong>without having to have a side discussion outside the contract</strong>. Similarly a customer can announce the service it needs and any seller that wants to provide it can contact the seller. <em>If this sounds too capitalistic, that is because it is capitalistic, every single thing interaction in the world is about capitalism!</em>.</p>
+<p><strong>Abstraction's beauty is in its completeness (neccessary and sufficient)</strong>. If the contract has been published, no further discussion has to happen between seller and customer (atleast regarding trade terms). What that means is that if the everyone creates their own contracts and people start following some conventions to standardise terms of different kinds of trades, then for that kind of trade any customer can connect with any seller at minimum possible effort. This results in more number of experiments around how to provide service for a certain trade type, which further fuels higher quality services at a much faster rate of availability. <strong>This is why we need abstractions.</strong></p>
+<p>Abstraction is most highlighted when working with computer systems. Everything is an abstraction over an abstraction over an abstraction and so on. In such systems, one needs to limit the layers of abstraction one dabbles into, as one can't possibly work on or understand every abstraction layer. Carl Sagan famously said that <em><strong>"If you want to make a sandwitch from scratch, you need to first make a universe"</strong></em>, so focus on the nitty gritties of what abstraction you have been given and what abstraction you are trying to provide by building on top of it.</p>
+<h1 id="virtual-machine"><a class="header-anchor no-hover-padding" href="#virtual-machine" aria-label="Anchor link for: virtual-machine"><span class="link-icon" aria-hidden="true"></span></a>
+Virtual Machine</h1>
+<p>Do you think computer is a complex machine! It surely is but its core design is so simple that one can intuitively comprehend it and maybe even come up with it with some brainstorming. This is the revelation I had when I looked at the interface and the state of a virtual machine.</p>
+<p>As a programmer, I deal with some or all of the following things on a regular basis. Writing a simple VM helped me understand the foundation and reasoning behind each one them -</p>
+<ul>
+<li>Memory allocation and deallocation for storing intermediate results.</li>
+<li>Input Output.</li>
+<li>Debugger</li>
+</ul>
+<p><em>Related post - <a href="../digital-machine-layer-by-layer">Digital Machine Layer by Layer</a></em></p>
+<h1 id="implementation"><a class="header-anchor no-hover-padding" href="#implementation" aria-label="Anchor link for: implementation"><span class="link-icon" aria-hidden="true"></span></a>
+Implementation</h1>
+<p>Implementation of 16-bit virtual machine (VM). <strong>Please note that this implementation is inspired by LC3 but does not completely follow it, infact implements instructions and design using my own intuition.</strong>
+<strong>(Checkout code at <a href="https://github.com/SaurabhGoyal/vmrs/">https://github.com/SaurabhGoyal/vmrs/</a>)</strong></p>
+<h2 id="what-value-and-api-does-a-vm-provide"><a class="header-anchor no-hover-padding" href="#what-value-and-api-does-a-vm-provide" aria-label="Anchor link for: what-value-and-api-does-a-vm-provide"><span class="link-icon" aria-hidden="true"></span></a>
+What value and API does a VM provide?</h2>
+<ul>
+<li>A virtual machine is a mock for a real machine, in our case a CPU.</li>
+<li>The main value that CPU provides is to run instructions.</li>
+<li>This implementation is inspired by <code>LC-3 architecture</code> of a CPU to build the virtual machine BUT would not implement or follow it completely.</li>
+<li>To run the machine, a program code has to be provided which is nothing but an array of instructions.</li>
+<li>The instructions themselves need to be in machine code, each instruction being a 16-bit value.</li>
+<li>The machine will simply execute and step through each instruction of the program one at a time.</li>
+<li>The instruction-set would be of Assembly language as it is smaller and easier to implement.</li>
+<li>The above is sufficient if we do have a machine which can not be interrupted (given additional input) during its execution.</li>
+<li>To add support of <code>interruption</code> of machine, we need a way for machine to be able to take new input, process it and generate a response of the execution of the input.</li>
+</ul>
+<h2 id="how-does-it-work-internally"><a class="header-anchor no-hover-padding" href="#how-does-it-work-internally" aria-label="Anchor link for: how-does-it-work-internally"><span class="link-icon" aria-hidden="true"></span></a>
+How does it work internally?</h2>
+<ul>
+<li>Machine needs to do take data, take instructions and do their calculations and produce results.</li>
+<li>Machine also needs to listen to external events such as IO devices.</li>
+<li>Machine needs a way for taking and storing the data, instructions and results. This is where <strong>memory</strong> comes.</li>
+<li>Machine needs to perform calculations for instructions, that calculation happens in the logic gates implemented in the hardware of the machine and is encapsulated in the form of <strong>registers</strong>.</li>
+<li>Data need to be sent to registers from memory and register is instructed to perform the operation.</li>
+<li><a href="https://en.wikipedia.org/wiki/Interrupt"><code>Interrupts</code></a> can be given only between instructions and not in between. In real hardware interrupts are enabled by having dedicated interrupt input pins for external systems which set the value as per the interrupt they want to trigger and the circuit of CPU is built in a way that in each instruction cycle, if the pin values are off, the normal instruction would be executed and if not, the circuit of interrupt handling branch will get enabled. In software, dedicated registers (special purpose registers) or dedicated memory (memory mapped registers) can be used to track the interrupt status.</li>
+<li>In this VM however, we would make the yield control back after each instruction cycle so that pending interrupts can be read and processed.</li>
+<li>An additional module, called, <code>Interrupt Controller</code> which can take input from user / external systems and pass on to CPU is added as well. A separate module is needed because we want the machine to not be impacted mid-instruction execution cycle if interrupts are generated and we don't want external modules to not be able to create interrupts if the CPU is busy.</li>
+</ul>
+<h2 id="components"><a class="header-anchor no-hover-padding" href="#components" aria-label="Anchor link for: components"><span class="link-icon" aria-hidden="true"></span></a>
+Components</h2>
+<p>Three components to enable above -</p>
+<ul>
+<li>Machine - simulates the CPU</li>
+<li>Interrupt Controller - simulates the interrupt pins and dedicated interrupt controller in a real hardware</li>
+<li>Simulator (<code>main.rs</code>) - performs two tasks -
+<ul>
+<li>Enables an user-interface (CLI) for external systems (programmer) to use the machine as well interrupt controller.</li>
+<li>Runs the above two systems in dedicated threads for them to be non blocking.</li>
+</ul>
+</li>
+</ul>
+<h3 id="machine"><a class="header-anchor no-hover-padding" href="#machine" aria-label="Anchor link for: machine"><span class="link-icon" aria-hidden="true"></span></a>
+Machine</h3>
+<ul>
+<li>Machine has three components -
+<ul>
+<li><strong>Registers -</strong> For control purpose. Each register can hold a 16 bit value. There are 10 registers in this implementation -
+<ul>
+<li>R0-R7 - value storage during instruction execution</li>
+<li>RPC - program counter for machine to track which instruction to be executed</li>
+<li>RCOND - value storage of previous instructions for conditional instructions</li>
+</ul>
+</li>
+<li><strong>Memory -</strong> For data storage purpose only. This provides a larger storage area than registers and is used purely for storage of data that can not be fit into storage registers (R0-R7). Each memory slot can also hold a 16-bit value.
+<ul>
+<li>Machine also provides a virtual component called <strong>"Memory Mapped Registers"</strong> which is nothing but memory area which will be used for control purpose of dynamic usecases such as handling IO from devices. Dedicated registers are not used for this because memory is more dispensable than registers.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Machine exposes three APIs -
+<ul>
+<li><code>Load()</code> - any arbitrary data in the memory. Programmer should use it to vm load data and program code into memory at desired addresses. (This is programmer's responsibility that the addresses of the data in the program code point correctly to the loaded data in memory.)</li>
+<li><code>Run()</code> - run the program code stored at given address. Machine sets <code>RPC</code> to that address and performs exactly one instruction cycle.</li>
+<li><code>HandleInterrupt(interrupt)</code> - runs the handler code corresponding to the given interrupt. This will be called manually by interrupt controller if needed. The handling happens in below steps -
+<ul>
+<li>For each interrupt id that needs to be handled, the logic (instructions) to handle it should be loaded into the memory using <code>load</code> API.</li>
+<li>A mapping of interrupt id to memory address of interrupt handler logic should be loaded into the memory using <code>load</code> API.</li>
+<li>CPU also needs to know the address of this mapping in memory to refer to. I am not sure how real machine does it, for now, I am going to use a hardcoded address of <code>0x0</code> to store the mapping. This would work because size of each part of the table and program code can be pre-calculated definteively by the programmer before uploading them into the machine.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Machine keeps loading the instruction at the memory address referred by <code>RPC</code> and executing the business logic of that instruction. If the instruction is <code>OP_TRAP</code> with <code>TRAP_HALT</code>, machine exits the program.</li>
+</ul>
+<h3 id="interrupt-controller"><a class="header-anchor no-hover-padding" href="#interrupt-controller" aria-label="Anchor link for: interrupt-controller"><span class="link-icon" aria-hidden="true"></span></a>
+Interrupt Controller</h3>
+<ul>
+<li>Interrupt Controller has a single component <strong>Pending Interrupt Queue</strong> where any incoming and non-handled interrupts are stored.</li>
+<li>We will model each interrupt as a single 8 bit data item with following format - <code>Device-id (4 bits) | Interrupt-id (4 bits)</code>. Interrupts themselves are simple signal mechanisms of an event happening and do not carry with them the data of the event. The data of the event should be put into an area commonly accessible by the external system as well as CPU. Such area can be CPU memory and special registers (such as Memory mapped registers) or dedicated managed-memory (separate from CPU, accessible via MMU - Memory Management Unit). In the former case, external system can use vm's <code>load</code> API and then use interrupt-controller's <code>int</code> API.</li>
+<li>It exposes two APIs -
+<ul>
+<li><code>Int(interrupt)</code> - Adds an interrupt to the pending queue. It may discard them as well depending on if they are duplicate or too soon or any other factor. This will be called by the external systems.</li>
+<li><code>IntA(interrupt)</code> - Acknowledges an interrupt handling to be complete and removes it from pending interrupts queue. This will be called based on interrupt handling response from CPU.</li>
+</ul>
+</li>
+</ul>
+<h2 id="exmaple-flow"><a class="header-anchor no-hover-padding" href="#exmaple-flow" aria-label="Anchor link for: exmaple-flow"><span class="link-icon" aria-hidden="true"></span></a>
+Exmaple Flow</h2>
+<h3 id="setting-up-the-machine-and-the-program"><a class="header-anchor no-hover-padding" href="#setting-up-the-machine-and-the-program" aria-label="Anchor link for: setting-up-the-machine-and-the-program"><span class="link-icon" aria-hidden="true"></span></a>
+Setting up the machine and the program</h3>
+<p><img src="http://memoryjoint.com/blog/virtual-machine/vm-setup.png" alt="vm-setup.png" /></p>
+<p><a href="https://sequencediagram.org/index.html#initialData=C4S2BsFMAIDUQE7AK4ENzQLKoMYAsQA7GAUQA9IdlQB7Q6AZVQFsAHKAKA92BoWgBEABQQ0A5ghbNICAdFQBnaKw6tUSEDhBrCwCTWStoAKmPlgMwukYBPBReYLV60Fp3BBDEM2ThUvfgY8SHBwOUVoSAUlAGJwEDE8PUkbZw03VF1BAFUGACFwpSjkaDiEpIlUVLV07UyPAQAJABFMAElCyIU8UvjE5KqOSEIAEzTXOt19QxNjAGEaNmoZcc1Jhux8IkhOgDdmXvLkyGHVjKyBNt0ZBENgBd1RUJlOzUP+gCNwZEgh0a4eCBdv4YCpWABacEAPlYAC4AOoIMAwK4WBC3VjAcGNTIjKAIcELEaQAA6hGYuAIxGgRHstxwtHoADMQFBoAAKEB4AB0NAAlKpoVEFLDTPtoOAaKgRjSeTRoAAGUxDaLQ-awgAyUplqJud2xuPxhJoxI5CoFwoAPJD1bgANaqa3g4Ww+0cYmA4EWZQcaZGciUaggOjQLU0IwAH2gOGYMoAvHHBJLpQIOPtIVD1cmRuyLf9uAygSCfRDoXDEcjoCJxJJmOCRv5UGSPkR1DZoCy2eyG8BULyBRCoS6xQds9Ae335QBGABMyuFauYmu10GajY5s4t0SdtpwDtYTpdbo9ha9oN9ohmAaojNDNHD0CjMfjiYE2dT6cXsOzub+YwLoBniWGblki3rVpUdZEqS5KUtsNKEHSyCFiGnYwOyrA4P2gpDtEorGOKY6Yby0AzgAHPOqqZkuWrSlWoiQcaprsuRW4KDuS5ugekJHnu7qQJ6xYqH60DXkGIZhpG0axtACZJtqH51l+P55v+gnemCIGwgwkAeBBtbQAsyDXPwTJ8JEFA3sGhA4cOBEHAoukAPqYdAAAsSrGCqChfjpWJCHMHIeWxHGunx3HOnhx4CaeQkXgY-qWeJ9CSY+0kvoIjnAC5OCKRm6pZTlv7DGMQA">(source)</a></p>
+<h3 id="running-the-program-and-handling-interrupts"><a class="header-anchor no-hover-padding" href="#running-the-program-and-handling-interrupts" aria-label="Anchor link for: running-the-program-and-handling-interrupts"><span class="link-icon" aria-hidden="true"></span></a>
+Running the program and handling interrupts</h3>
+<p><img src="http://memoryjoint.com/blog/virtual-machine/vm-run.png" alt="vm-run.png" /></p>
+<p><a href="https://sequencediagram.org/index.html#initialData=C4S2BsFMAIDUQE7AK4ENzQLKoMYAsQA7GAUQA9IdlQB7Q6AZVQFsAHKAKA92BoWgBEABQQ0A5ghbNICAdFQBnaKw6tUSEDhBrCwCTWStoAKmPlgMwukYBPBReYLV60Fp3BBDEM2ThUvfgY8SHBwOUVoSAUlAGJwEDE8PUkbZw03VF1BAFUGACFwpSjkaDiEpIlUVLV07UyPAQAJABFMAElCyIU8UvjE5KqOSEIAEzTXOt19QxNjAGEaNmoZcc1Jhux8IkhOgDdmXvLkyGHVjKyBNt0ZBENgBd1RUJlOzUP+gCNwZEgh0a4eCBdv4YCpWABaAB8UQUAC5TPtIhQcKYhtEoftYZBkWiFAAecHgzG4ADWqgJ4JhsNJHBGkEBwIsyg401YZU+31IyOoIDo0AAMjQaEYAD7QHDMEbQAC80sE2MoAg4+0JkMxCqoFgA+kR7LccLRCAAKACUfzGHEINCZNF2Mi6sT6SRsIXANAA7rCsJk0BgiBYELdWB4AGaiA7dV0Ag1AkHMiHQ6Lw4xvf3QACM0AALKiYVDNLC05ms7iKQWaawKVSaXSGXGVCzRIZ2UlWEQSdA2nMBULReLJTK5QJ-UrNKqCwAlSh8KX+m53bMcMdq5iFrLFpc4CnEnBk4YW1kt4BfH7QciUHl8wXC6BiiVS2WCEfK5iqzF4TIjKA666Bu5GrMzRVSEC39LVSQAoDmDLHBqV3c0uEPJ1jmGTtu2vPt70HJ9dHA3dRxwcdYLmKB1GgOc-2DRd9y4K0bTtfhineZ1XQ9L0rgDINQ3DaBkAUD5oDpXZNF+bgY0ZGBijRZB81gtMACZoAAVmkmC4LJWtxLjKTGwMNlkLbQgOy7HsbzvAdH2HXQCKI2EpxwGdyN-LjlM3DFVwU1zNG3VcaRo3Tm2Qk8uQvQ1TMwiyh2fFV3NhD9Rm-CiuKNJSoNktdgDwkkUqgtS-P+AL9KOCQTnoEyMNvfsHyi3DSRs9KSPpfgkoXFSaKAA">(source)</a></p>
+<h2 id="doubts"><a class="header-anchor no-hover-padding" href="#doubts" aria-label="Anchor link for: doubts"><span class="link-icon" aria-hidden="true"></span></a>
+Doubts</h2>
+<ul>
+<li><strong>Why to model registers as unsigned ints and then handle the negative numbers manually in VM logic instead of modelling them as signed ints only?</strong>
+<ul>
+<li>Because registers in hardware are simple bit storage devices and do NOT care about the data they hold, i.e. they do not have a direct understanding of numbers, let alone positive or negative. This also keeps the hardware API simpler for different users to build whatever logic they want to build on top of a bit array register.</li>
+<li>Ref - <a href="https://stackoverflow.com/a/27207704/2555504">https://stackoverflow.com/a/27207704/2555504</a></li>
+</ul>
+</li>
+<li><strong>Why do we need Program-Counter reigtser (<code>RPC</code>)?</strong>
+<ul>
+<li>To support non-linear execution of code which is powered by <code>go-to / jump</code> statement enabling connstructs such as <code>if-else</code> and <code>loop</code>.</li>
+</ul>
+</li>
+<li><strong>Why do we need a dedicated register (<code>RSTAT</code>) for maintaining the sign of the result of previous instruction when the same can be checked from the result itself?</strong>
+<ul>
+<li><code>RSTAT</code> is a dedicated register for a quick lookup of multiple things such as sign of last result (+ve / -ve), status of last operation (underflow / overflow), augmented information of last result (carry) and various interrupts. While the sign can be directly checked from result, the check is mostly conducted in some kind of branching decision context which is where status register provides information in generic sense.</li>
+<li>This register has been named as <code>RCOND</code> in the referring blog post and is also called as <code>Condition Code Register</code> or simply <code>Condition Register</code> sometimes.</li>
+</ul>
+</li>
+<li><del><strong>We are using a dedicated op-code for not treating an instruction as operation, for storing raw data in memory. This wastes 4 bits, is there any workaround?</strong></del>
+<ul>
+<li>Using the two step (load, run) process now instead of the single step (run-with-load), resolving this issue.</li>
+</ul>
+</li>
+<li><strong>Why is an address needed to vm load the program code? While I haven't used any custom address, i.e. loaded the program code simply at 0th address, the blog post suggest to use 0x3000, why?</strong>
+<ul>
+<li>The reason is simply that in real world, machine may have more things that it needs to manage in the memory other than just the program code to be executed. One such thing is trap routine code which is nothing but some special instructions that machine itself has hardcoded to provide functionalities such as talking to IO devices and halt the program.</li>
+</ul>
+</li>
+</ul>
+<h1 id="in-depth"><a class="header-anchor no-hover-padding" href="#in-depth" aria-label="Anchor link for: in-depth"><span class="link-icon" aria-hidden="true"></span></a>
+In-Depth</h1>
+<h2 id="memory-access-control-via-segmentation"><a class="header-anchor no-hover-padding" href="#memory-access-control-via-segmentation" aria-label="Anchor link for: memory-access-control-via-segmentation"><span class="link-icon" aria-hidden="true"></span></a>
+Memory Access Control via Segmentation</h2>
+<p>While the machine treats memory as something where anything can be loaded and executed, we do need some additional semantics for the correct working of the machine. In bare minimum vm, we have atleast three types of information that a memory slot can store -</p>
+<ul>
+<li>Program data - static data that a program will use such as numbers and strings.</li>
+<li>Program code - the instruction that a program is made of.</li>
+<li>Generated data - the data generated during the program execution and at the end of it. Ex.- temporary values during execution and permanent values as result.</li>
+</ul>
+<p><strong>We don't want a program to be able to overwrite its own instructions during execution or overwrite the program-data as it would cause errors when accessing that memory slot.</strong> So we need to put some kind of access control around slots. A simple technique for the same is <strong><code>memory segmentation</code></strong> where each memory slot has data as well as a segment_id to represent the category of the data it holds. Using this <code>segment_id</code>, following logic can be applied for access control -</p>
+<ul>
+<li>A write on a slot can succeed only if the slot's current segment is either uninitialised or is same as the segment of the data being written.</li>
+<li>A write on a slot can be restricted to certain segment_types depending on who is calling.</li>
+<li>A read on a slot would return segment of data as well so the caller can use that to assert that they are treating the data with the same expectation that it was written with.</li>
+</ul>
+<p>In total we have following segment types -</p>
+<ul>
+<li><strong>Uninitialised (0)</strong> - Memory slot is still up for grab.</li>
+<li><strong>Interrupt-Data (1)</strong> - Memory slot is reserved for storing data uploaded by external systes to augment interrupt signals.</li>
+<li><strong>Interrupt-Handler-Table (2)</strong> - Memory slot is reserved for storing the mapping between interrupt-code and the absolute memory address of its handler logic.</li>
+<li><strong>Interrupt-Program-Code (3)</strong> - Memory slot is reserved for storing the instructions for handler logic.</li>
+<li><strong>Program-Data (4)</strong> - Memory slot is reserved for storing the hard-coded data loaded by programmer.</li>
+<li><strong>Program-Code (5)</strong> - Memory slot is reserved for storing the instructions loaded by programmer.</li>
+<li><strong>Dynamic-Data (6)</strong> - Memory slot is reserved for storing the data dynamically generated during execution of instructions.</li>
+</ul>
+<p>Out of all above, all segment types other than Dynamic-Data are <code>privileged segments</code> and can be written only via <code>Load API</code>. This is essentially a reflection of what we call <code>kernel mode</code>.</p>
+<p>Read the <a href="http://memoryjoint.com/blog/virtual-machine/#interrupt-handling">Interrupt Handling</a> section for more details on need of all these segments.</p>
+<h2 id="interrupt-handling"><a class="header-anchor no-hover-padding" href="#interrupt-handling" aria-label="Anchor link for: interrupt-handling"><span class="link-icon" aria-hidden="true"></span></a>
+Interrupt Handling</h2>
+<p>We saw in the <a href="http://memoryjoint.com/blog/virtual-machine/#running-the-program-and-handling-interrupts">interrupt handling flow</a> how an interrupt is triggered by an external device and how CPU handler handles it and sends an ACK back. There are two details that are missing there though -</p>
+<ol>
+<li>How does machine know how to handle a certain interrupt?</li>
+<li>How does the external device shares the data related to the interrupt with the machine? For ex.- the input character in case of a keyboard char-input interrupt.</li>
+<li>How does machine know when to stop and when to continue?</li>
+</ol>
+<p>To enable the first two, machine provides three type of memory segments as we saw in  <a href="http://memoryjoint.com/blog/virtual-machine/#memory-access-control-via-segmentation">Memory Segmentation section</a>.</p>
+<ul>
+<li><strong>Interrupt-Program-Code (3)</strong> - The handler logic of each interrupt_id can be stored in memory slots with this segment-id.</li>
+<li><strong>Interrupt-Handler-Table (2)</strong> - The mapping of interrupt_id to the absolute memory address of the handler logic of interrupt_ids can be stored in memory slots with this segment-id.</li>
+<li><strong>Interrupt-Data (1)</strong> - Any data needed for the interrupt can be stored in memory slots with this segment-id. This will be loaded by external systems.</li>
+</ul>
+<p>To enable the 3rd point, a key point to note is that different interrupts would have different handling. For example - machine may not be interested in timer interrupt at all, machine may not be interested in a user-input interrupt as well unless the program demands that.</p>
+<ul>
+<li>So a key point to note here would be that <code>machine depending on whether it is interested in the interrupt or not, can handle or discard them</code>.</li>
+<li>How would machine know whether it is interested? This can be done by use of specific values in <code>RSTAT</code> register which would be set by specific <code>TRAP</code> instructions. Ex.-
+<ul>
+<li>If a program needs user input, it adds an instruction in the program <code>TRAP_GETC</code>.</li>
+<li>Machine sets <code>RSTAT</code> as <code>RSTAT_WAITING_FOR_INPUT</code> as per this instruction and <strong>DOES NOT</strong> increase the program counter because we want to wait for this to complete.</li>
+<li>In further execution cycles, machine does not perform any instruction because of RSTAT value. Another such value which stops machine to perform anything is <code>RSTAT_HALT</code>.</li>
+<li>In the interrupt handler code of machine, machine should check whether it wants to handle the <code>INTERRUPT_GET_C</code> based on value of <code>RSTAT</code>.</li>
+<li>If yes, current program-counter is stores temporarily, <code>RSTAT</code> is reset to <code>RSTA_CONDITION_ZERO</code> and interrupt handler logic from memory is executed. Post execution, program-counter is increased by 1 from the persisted program-counter so that execution continues in the user-program.</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://memoryjoint.com/blog/virtual-machine/interrupt-handling.png" alt="interrupt-handling.png" /></p>
+<p><a href="https://sequencediagram.org/index.html#initialData=C4S2BsFMAIDUQE7AK4ENzQLKoMYAsQA7GAUQA9IdlQB7Q6AZVQFsAHKAKA92BoWgBEABQQ0A5ghbNICAdFQBnaKw6tUSEDhBrCwCTWStoAKmPlgMwukYBPBReYLV60Fp3BBDEM2ThUvfgY8SHBwOUVoSAUlAGJwEDE8PUkbDkhCABNnDTdUXX1DE2MAYRo2ahls1208jwFsfCJIcKUAN2ZoOISkiUh0qs0a3UEASV0ZBENgUt1RUJkW6E1O+MTgACNwZEg0zK5CGgtoGlaZaHaV7uAbEPAaAHcALmgRcUkO+9qlXmhPsGgAGZ8aDIBRnIisahcHggVr+GDtDjtAC0yIAfO1nq8JCxkWN7JMcLRCAAdQgAAwAKgAlACCQmgAHESJTiuSkcxURjmM9qQxKbTKdAALzQADqtJGlJGADlGQB9ABiAHlqfLZUIAKqUjgZSAwuFHREcA5HE5nKKxVZJG6hB7PTVg-gQ6hLcYISasDwgb4IBJiGSQLLcImw+HKVTozHQO6oDLQfDqHgyeUu4AAOho0AAjNAAAxkgAUcK2MAA7G6cwA2aDrMAASg5XOj9z9RwrPzjGQQlvzvzAeDdwHlGX8qGghez9egYLE0l0yJAWVYAB5UdHcABrSNoy2PUzLIgeADMOdMaWi6M0jyP0FP2YvCjXi5wjy3qmfe-feoN4ZUHAKVgujWVgiE3aARmKaAABkaBoIwAB8E2YeNhVFAQjwEDhNC5a9qUoPh4yPCYpjvbCcCjHlb3vcjn0xd90mDU0YHNfgLmAm1bntaBHXBQhIW9d1PW9JQ8DyDIoCI+hmFwAhiC4QCOI2UtoHIShqBAOgYLgxDkNQ9DMKbSjHj5AUhXwShtxRYyezjIcSK9eQMm7XtgFQTYYH8HN+2AQdZ3nYcl3kJQj3lNyPInAAmRtrO5R5bKkiwPVIu4xGWIF+ADYAcHkDxszzHy-MgOd0kC+MIlCnAaD1CdjxizljNMwURWgAAtEhqWVIy4upIQoNFMTMigBB5S7Htog4O54JBXQQFCaAmspYUAAlaWgnVYsxSAKCoCxU0IAlkFDOgi2zewliS6BkRjGg7OkTkCp+ak83rItIsyC6zmusTwGARtGO6zFev65Qe1aeUEFYHKAGocybNFr1CrdCwAFnq59rwYvYgA">(source)</a></p>
+<h1 id="example-run"><a class="header-anchor no-hover-padding" href="#example-run" aria-label="Anchor link for: example-run"><span class="link-icon" aria-hidden="true"></span></a>
+Example Run</h1>
+<p>In this example, we are taking a number as input from user and adding doubling it by adding it to itself. The logic would go like this -</p>
+<ul>
+<li>
+<p>Load the needed static data into machine memory -</p>
+<ul>
+<li>
+<p>We need memory slots for external devices to write to. We assign addresses 0-7 for that.</p>
+</li>
+<li>
+<p>We need memory slots for interrupt-address-table. Table currently has only one key value entry, interrupt_id 1 has handler logic at 10. We assign addresses 8-9 for that.</p>
+<p><code>vm load src/sample_programs/int_handler_address_table.o 2 8</code></p>
+</li>
+<li>
+<p>We need memory slots for interrupt-handler-logic for getc (<code>src/sample_programs/int_handler_getc.o</code>). The logic has only two instructions - load from 0 to R0 and halt. We assign addresses 10-11 for that.</p>
+<p><code>vm load src/sample_programs/int_handler_getc.o 3 10</code></p>
+</li>
+<li>
+<p>We need memory slots for program-code for getc demo program (<code>src/sample_programs/getc.o</code>). The logic has three instructions - Trap Getc, add R0 to R0 and halt. We assign addresses 12-14 for that.</p>
+<p><code>vm load src/sample_programs/getc.o 4 12</code></p>
+</li>
+</ul>
+</li>
+<li>
+<p>Once loaded, we set the program counter to the address of the program.</p>
+<p><code>vm set_pc 12</code></p>
+</li>
+<li>
+<p>To start execution of demo program. We use <code>vm exec</code>. The program will execute first instruction (<code>TRAP_GETC</code>) and halt because of waiting for input.</p>
+</li>
+<li>
+<p>To trigger user input interrupt -</p>
+<ul>
+<li>
+<p>We load value 7 into the int_data segment memory.</p>
+<p><code>vm load src/sample_programs/character_input.o 1 0</code></p>
+</li>
+<li>
+<p>We trigger the getc interrupt (1) from device_id 3.</p>
+<p><code>ic int 3 1</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<p><code>RUST_BACKTRACE=1 cargo run -q</code></p>
+<pre class="z-code"><code><span class="z-text z-plain">vm load src/sample_programs/int_handler_address_table.o 2 8
+</span><span class="z-text z-plain">vm load src/sample_programs/int_handler_getc.o 3 10
+</span><span class="z-text z-plain">vm load src/sample_programs/getc.o 4 12
+</span><span class="z-text z-plain">vm set_pc 12
+</span><span class="z-text z-plain">vm exec
+</span><span class="z-text z-plain">vm exec
+</span><span class="z-text z-plain">vm exec
+</span><span class="z-text z-plain">vm load src/sample_programs/character_input.o 1 0
+</span><span class="z-text z-plain">ic int 3 1
+</span><span class="z-text z-plain">vm exec
+</span><span class="z-text z-plain">vm exec
+</span></code></pre>
+<p><img src="http://memoryjoint.com/blog/virtual-machine/vm-run.gif" alt="vm-run.gif" /></p>
+<h1 id="instruction-set"><a class="header-anchor no-hover-padding" href="#instruction-set" aria-label="Anchor link for: instruction-set"><span class="link-icon" aria-hidden="true"></span></a>
+Instruction-Set</h1>
+<h2 id="general-syntax"><a class="header-anchor no-hover-padding" href="#general-syntax" aria-label="Anchor link for: general-syntax"><span class="link-icon" aria-hidden="true"></span></a>
+General syntax</h2>
+<p><code>OP_CODE - (4 bits) | OPERANDS (12 bits)</code></p>
+<h2 id="commands"><a class="header-anchor no-hover-padding" href="#commands" aria-label="Anchor link for: commands"><span class="link-icon" aria-hidden="true"></span></a>
+Commands</h2>
+<h3 id="data-opcode-1110"><a class="header-anchor no-hover-padding" href="#data-opcode-1110" aria-label="Anchor link for: data-opcode-1110"><span class="link-icon" aria-hidden="true"></span></a>
+Data (OpCode - 1110)</h3>
+<ul>
+<li>Stores given value in memory.</li>
+<li>Syntax - <code>1110 (4 bits) | Data (12 bits)</code></li>
+</ul>
+<h3 id="add-opcode-0001"><a class="header-anchor no-hover-padding" href="#add-opcode-0001" aria-label="Anchor link for: add-opcode-0001"><span class="link-icon" aria-hidden="true"></span></a>
+ADD (OpCode - 0001)</h3>
+<ul>
+<li>Adds two values and puts the result into a destination register. The values van be either fetched from registers or given in-place.</li>
+<li>Syntax - <code>0001 (4 bits) | Dest Register (3 bits) | Source-Register-1 (3 bits) | Mode (1 bit) | Mode-Specific-Operands (5 bits)</code></li>
+<li>Two modes
+<ul>
+<li>Register mode (Mode bit 0) - When second operand data is in another source register.</li>
+<li>Syntax - <code>0001 (4 bits) | Dest Register (3 bits) | Source-Register-1 (3 bits) | 0 (1 bit) | 00 (2 bits) | Source-Register-2 (3 bits)</code></li>
+<li>Immediate mode (Mode bit 1) - When second operand data is in the instruction itself.</li>
+<li>Syntax - <code>0001 (4 bits) | Dest Register (3 bits) | Source-Register-1 (3 bits) | 1 (1 bit) | Sign-of-Value (1 bit) | Number-of-Value (4 bits)</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="load-opcode-0010"><a class="header-anchor no-hover-padding" href="#load-opcode-0010" aria-label="Anchor link for: load-opcode-0010"><span class="link-icon" aria-hidden="true"></span></a>
+Load (OpCode - 0010)</h3>
+<ul>
+<li>Loads the value given in the instruction to the destination register for later use.</li>
+<li>Syntax - <code>0010 (4 bits) | Dest Register (3 bits) | 0 (1 bit) | Sign-of-Value (1 bit) | Number-of-Value (7 bits)</code></li>
+</ul>
+<h3 id="loadindirect-opcode-0011"><a class="header-anchor no-hover-padding" href="#loadindirect-opcode-0011" aria-label="Anchor link for: loadindirect-opcode-0011"><span class="link-icon" aria-hidden="true"></span></a>
+LoadIndirect (OpCode - 0011)</h3>
+<ul>
+<li>Loads the value at the memory address given in the instruction to the destination register for later use.</li>
+<li>Important thing to note is that the address will be relative to the program code instructions and not absolute. This means that the relative address can be negative and should be sign-extended.</li>
+<li>Syntax - <code>0011 (4 bits) | Dest Register (3 bits) | Relative-Memory-Address (9 bits)</code></li>
+</ul>
+<h3 id="loadregister-opcode-0110"><a class="header-anchor no-hover-padding" href="#loadregister-opcode-0110" aria-label="Anchor link for: loadregister-opcode-0110"><span class="link-icon" aria-hidden="true"></span></a>
+LoadRegister (OpCode - 0110)</h3>
+<ul>
+<li>Loads the value stored in the source register given in the instruction to the destination register for later use.</li>
+<li>Syntax - <code>0001 (4 bits) | Dest Register (3 bits) | Source-Register (3 bits) | 000000 (6 bits)</code></li>
+</ul>
+<h3 id="jump-opcode-0100"><a class="header-anchor no-hover-padding" href="#jump-opcode-0100" aria-label="Anchor link for: jump-opcode-0100"><span class="link-icon" aria-hidden="true"></span></a>
+Jump (OpCode - 0100)</h3>
+<ul>
+<li>Sets program counter to the memory address given in the instruction.</li>
+<li>Enables non-liner execution of program.</li>
+<li>Syntax - <code>0100 (4 bits) | 000 (3 bits) | Relative-Memory-Address (9 bits)</code></li>
+</ul>
+<h3 id="jumpifsign-opcode-0101"><a class="header-anchor no-hover-padding" href="#jumpifsign-opcode-0101" aria-label="Anchor link for: jumpifsign-opcode-0101"><span class="link-icon" aria-hidden="true"></span></a>
+JumpIfSign (OpCode - 0101)</h3>
+<ul>
+<li>Sets program counter to the memory address given in the instruction if the register given in instruction has negative value.</li>
+<li>Enables non-liner execution of program.</li>
+<li>Syntax - <code>0101 (4 bits) | Dest Register (3 bits) | Relative-Memory-Address (9 bits)</code></li>
+</ul>
+<h3 id="trap-opcode-1111"><a class="header-anchor no-hover-padding" href="#trap-opcode-1111" aria-label="Anchor link for: trap-opcode-1111"><span class="link-icon" aria-hidden="true"></span></a>
+Trap (OpCode - 1111)</h3>
+<ul>
+<li>
+<p>Sets a trap to the instruction execution for machine to do things outside the instruction in the program code.</p>
+</li>
+<li>
+<p>These things can be things such as talking to IO decices or halting the program. Simple way to imagine is that this is a set of machine defined functionalities to interact with outside the program-code and machine scope.</p>
+</li>
+<li>
+<p>Since these things are something that machine implements on its own and are not part of user-defined instructions, machine implements them itself and stores the implementation logic in memory. This is the reason, machine may need some part of its memory for its own things and program code would be stored at a non-zero address, typically 0x3000.</p>
+</li>
+<li>
+<p><strong>NOTE</strong> - This memory address is needed mostly for the real hardware where the instructions for handling a trap code are written in machine code (translated from assembly) and stored in the memory. For our case (VM), we would implement them in the Rust runtime only so no dedicated memory address is needed.</p>
+</li>
+<li>
+<p>Because of multiple types of traps and their distinct nature of being a foreign-function-interface instruction, they have been categorised into one opcode where the trap type can be passed as an operand, instead of creating a dedicated opcode for each trap. https://www.jmeiners.com/lc3-vm/#trap-routines</p>
+<blockquote>
+<p>Trap for additional functionalities You may be wondering why the trap codes are not included in the instructions. This is because they do not actually introduce any new functionality to the LC-3, they just provide a convenient way to perform a task (similar to OS system calls). In the official LC-3 simulator, trap routines are written in assembly. When a trap code is called, the PC is moved to that code’s address. The CPU executes the procedure’s instructions, and when it is complete, the PC is reset to the location following the initial call.</p>
+</blockquote>
+<blockquote>
+<p>Note: This is why programs start at address 0x3000 instead of 0x0. The lower addresses are left empty to leave space for the trap routine code.</p>
+</blockquote>
+</li>
+<li>
+<p>Syntax - <code>1111 (4 bits) | 0000 (4 bits) | TrapCode (8 bits)</code></p>
+</li>
+<li>
+<p>Trap always works with R0 only, i.e. if it reads character, it would store in R0, if it prints character, it would load value from R0.</p>
+</li>
+<li>
+<p>Trap codes -</p>
+<ul>
+<li>Halt (0) - Stops the program execution.</li>
+<li>GetC (1) - Blocks the program to get one character from keyboard and sets it it R0.</li>
+</ul>
+</li>
+</ul>
+<h1 id="references"><a class="header-anchor no-hover-padding" href="#references" aria-label="Anchor link for: references"><span class="link-icon" aria-hidden="true"></span></a>
+References</h1>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Little_Computer_3">https://en.wikipedia.org/wiki/Little_Computer_3</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Little_man_computer">https://en.wikipedia.org/wiki/Little_man_computer</a></li>
+<li><a href="https://www.jmeiners.com/lc3-vm/#:lc3.c_2">https://www.jmeiners.com/lc3-vm/#:lc3.c_2</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Interrupt">https://en.wikipedia.org/wiki/Interrupt</a></li>
+<li><a href="https://www.youtube.com/watch?v=oArXOAhzOdY&amp;list=PLUkZG7_4JtUL22HycWYR_J-1xJo7rQGhr">https://www.youtube.com/watch?v=oArXOAhzOdY&amp;list=PLUkZG7_4JtUL22HycWYR_J-1xJo7rQGhr</a></li>
+<li><a href="https://www.andreinc.net/2021/12/01/writing-a-simple-vm-in-less-than-125-lines-of-c">https://www.andreinc.net/2021/12/01/writing-a-simple-vm-in-less-than-125-lines-of-c</a></li>
+</ul>
+
+        </section>
+
+        
+        
+        
+        
+
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+            
+            
+            
+
+            
+        
+
+        
+        
+
+        
+                
+                
+                    
+                    
+                        
+                        
+                        
+                    
+                
+                
+            <nav class="full-width article-navigation">
+                <div></div>
+                <div><a href="http://memoryjoint.com/blog/bittorrent-client/" aria-label="Prev" aria-describedby="right_title">Prev&nbsp;<span class="arrow">→</span></a>
+                <p aria-hidden="true" id="right_title">[In-Progress] Implementing a Bittorrent Client</p></div>
+            </nav>
+        
+
+    </article>
+</main>
+
+    <div id="button-container">
+        
+        
+            <div id="toc-floating-container">
+                <input type="checkbox" id="toc-toggle" class="toggle"/>
+                <label for="toc-toggle" class="overlay"></label>
+                <label for="toc-toggle" id="toc-button" class="button" title="Toggle Table of Contents">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M414.82-193.094q-18.044 0-30.497-12.32-12.453-12.319-12.453-30.036t12.453-30.086q12.453-12.37 30.497-12.37h392.767q17.237 0 29.927 12.487 12.69 12.486 12.69 30.203 0 17.716-12.69 29.919t-29.927 12.203H414.82Zm0-244.833q-18.044 0-30.497-12.487Q371.87-462.9 371.87-480.45t12.453-29.92q12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.511 12.69 12.512 12.69 29.845 0 17.716-12.69 30.086-12.69 12.37-29.927 12.37H414.82Zm0-245.167q-18.044 0-30.497-12.32t-12.453-30.037q0-17.716 12.453-30.086 12.453-12.369 30.497-12.369h392.767q17.237 0 29.927 12.486 12.69 12.487 12.69 30.203 0 17.717-12.69 29.92-12.69 12.203-29.927 12.203H414.82ZM189.379-156.681q-32.652 0-55.878-22.829t-23.226-55.731q0-32.549 23.15-55.647 23.151-23.097 55.95-23.097 32.799 0 55.313 23.484 22.515 23.484 22.515 56.246 0 32.212-22.861 54.893-22.861 22.681-54.963 22.681Zm0-245.167q-32.652 0-55.878-23.134-23.226-23.135-23.226-55.623 0-32.487 23.467-55.517t56.12-23.03q32.102 0 54.721 23.288 22.62 23.288 22.62 55.775 0 32.488-22.861 55.364-22.861 22.877-54.963 22.877Zm-.82-244.833q-32.224 0-55.254-23.288-23.03-23.289-23.03-55.623 0-32.333 23.271-55.364 23.272-23.03 55.495-23.03 32.224 0 55.193 23.288 22.969 23.289 22.969 55.622 0 32.334-23.21 55.364-23.21 23.031-55.434 23.031Z"/></svg>
+                </label>
+                <div class="toc-content">
+                    
+
+<div class="toc-container">
+    
+
+    <ul>
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#abstraction">Abstraction</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#virtual-machine">Virtual Machine</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#implementation">Implementation</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#what-value-and-api-does-a-vm-provide">What value and API does a VM provide?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#how-does-it-work-internally">How does it work internally?</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#components">Components</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#machine">Machine</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#interrupt-controller">Interrupt Controller</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#exmaple-flow">Exmaple Flow</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#setting-up-the-machine-and-the-program">Setting up the machine and the program</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#running-the-program-and-handling-interrupts">Running the program and handling interrupts</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#doubts">Doubts</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#in-depth">In-Depth</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#memory-access-control-via-segmentation">Memory Access Control via Segmentation</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#interrupt-handling">Interrupt Handling</a>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#example-run">Example Run</a>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#instruction-set">Instruction-Set</a>
+                    
+                        <ul>
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#general-syntax">General syntax</a>
+                                        
+                                    </li>
+                                
+                            
+                                
+                                    <li><a href="http://memoryjoint.com/blog/virtual-machine/#commands">Commands</a>
+                                        
+                                            <ul>
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#data-opcode-1110">Data (OpCode - 1110)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#add-opcode-0001">ADD (OpCode - 0001)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#load-opcode-0010">Load (OpCode - 0010)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#loadindirect-opcode-0011">LoadIndirect (OpCode - 0011)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#loadregister-opcode-0110">LoadRegister (OpCode - 0110)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#jump-opcode-0100">Jump (OpCode - 0100)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#jumpifsign-opcode-0101">JumpIfSign (OpCode - 0101)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                                    
+                                                        <li><a href="http://memoryjoint.com/blog/virtual-machine/#trap-opcode-1111">Trap (OpCode - 1111)</a>
+                                                            
+                                                        </li>
+                                                    
+                                                
+                                            </ul>
+                                        
+                                    </li>
+                                
+                            
+                        </ul>
+                    
+                </li>
+            
+        
+            
+            
+                <li><a href="http://memoryjoint.com/blog/virtual-machine/#references">References</a>
+                    
+                </li>
+            
+        
+    </ul>
+</div>
+
+
+                </div>
+            </div>
+        
+
+        
+        
+
+        
+        <a href="#" id="top-button" class="no-hover-padding" title="Go to the top of the page">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"/></svg>
+        </a>
+    </div>
+
+
+<span id="copy-success" class="hidden">
+        Copied!
+    </span>
+    <span id="copy-init" class="hidden">
+        Copy code to clipboard
+    </span>
+    <script defer src="http://memoryjoint.com/js/copyCodeToClipboard.min.js"></script>
+    </div>
+    <footer>
+    <section>
+        <nav class="socials nav-navs">
+                <ul>
+                    
+                    
+                    
+                    
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://github.com/SaurabhGoyal/>
+                                    <img alt=github title=github src="http://memoryjoint.com/social_icons/github.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://gitlab.com/saurabh.2561/>
+                                    <img alt=gitlab title=gitlab src="http://memoryjoint.com/social_icons/gitlab.svg">
+                                </a>
+                            </li>
+                        
+                            <li>
+                                <a class="nav-links no-hover-padding social" rel=" me"  href=https://twitter.com/notintobuying>
+                                    <img alt=twitter title=twitter src="http://memoryjoint.com/social_icons/twitter.svg">
+                                </a>
+                            </li>
+                        
+                    
+                </ul>
+            
+        </nav>
+
+        
+        <nav class="nav-navs">
+        </nav>
+
+        <div class="credits">
+            <small>
+                
+
+                
+                Powered by
+                <a rel=""  href="https://www.getzola.org">Zola</a>
+                &amp;
+                <a rel=""  href="https://github.com/welpo/tabi">tabi</a>
+
+                </small>
+        </div>
+    </section>
+
+    </footer>
+
+</body>
+
+</html>
